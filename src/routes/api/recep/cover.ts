@@ -13,8 +13,11 @@ export const Route = createFileRoute("/api/recep/cover")({
         if (!Number.isInteger(body.articleId) || !["auto", "manual", "none"].includes(body.mode ?? "")) {
           return Response.json({ error: "Geçersiz kapak ayarı." }, { status: 400 });
         }
-        const imageUrl = body.imageUrl?.trim() ?? "";
+        let imageUrl = body.imageUrl?.trim() ?? "";
         if (body.mode === "manual") {
+          if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
+            imageUrl = `https://${imageUrl}`;
+          }
           try {
             const url = new URL(imageUrl);
             if (!/^https?:$/.test(url.protocol)) throw new Error();

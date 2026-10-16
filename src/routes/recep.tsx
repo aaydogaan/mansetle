@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentProps, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, CircleCheck, FileImage, FilePenLine, ImageOff, Inbox, Link2, LoaderCircle, LogOut, RefreshCw, Send, Sparkles } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, CircleCheck, FileImage, FilePenLine, ImageOff, Inbox, LoaderCircle, LogOut, RefreshCw, Save, Send, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/recep")({ component: RecepPage });
 
@@ -54,7 +54,12 @@ function ActionButton({ children, className = "", ...props }: ComponentProps<"bu
 }
 
 function RecepPage() {
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [authenticated, setAuthenticated] = useState<boolean | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("mansetle_admin_session") === "1" ? true : null;
+    }
+    return null;
+  });
   const [password, setPassword] = useState("");
   const [queue, setQueue] = useState<QueuePayload | null>(null);
   const [cachedCounts, setCachedCounts] = useState<Record<QueueView, number> | null>(null);
@@ -62,15 +67,19 @@ function RecepPage() {
   const [loadingView, setLoadingView] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [savedCoverId, setSavedCoverId] = useState<number | null>(null);
   const [coverUrls, setCoverUrls] = useState<Record<number, string>>({});
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   const loadQueue = async (nextView = view, page = 1) => {
     setLoadingView(true);
     try {
-      const response = await fetch(`/api/recep/queue?view=${nextView}&page=${page}`);
+      const response = await fetch(`/api/recep/queue?view=${nextView}&page=${page}`, {
+        credentials: "include",
+      });
       if (response.status === 401) {
         setAuthenticated(false);
+        localStorage.removeItem("mansetle_admin_session");
         return;
       }
       if (!response.ok) throw new Error(await responseMessage(response));
@@ -84,13 +93,22 @@ function RecepPage() {
   };
 
   useEffect(() => {
-    void fetch("/api/recep/session")
+    void fetch("/api/recep/session", { credentials: "include" })
       .then((response) => response.json())
       .then((payload: { authenticated?: boolean }) => {
-        setAuthenticated(Boolean(payload.authenticated));
-        if (payload.authenticated) return loadQueue("incoming");
+        const isAuth = Boolean(payload.authenticated);
+        setAuthenticated(isAuth);
+        if (isAuth) {
+          localStorage.setItem("mansetle_admin_session", "1");
+          return loadQueue("incoming");
+        } else {
+          localStorage.removeItem("mansetle_admin_session");
+        }
       })
-      .catch(() => setAuthenticated(false));
+      .catch(() => {
+        setAuthenticated(false);
+        localStorage.removeItem("mansetle_admin_session");
+      });
   }, []);
 
   const run = async (key: string, task: () => Promise<void>, fallback: string) => {
@@ -113,9 +131,11 @@ function RecepPage() {
         const response = await fetch("/api/recep/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ password }),
         });
         if (!response.ok) throw new Error(await responseMessage(response));
+        localStorage.setItem("mansetle_admin_session", "1");
         setPassword("");
         setAuthenticated(true);
         await loadQueue("incoming");
@@ -128,7 +148,10 @@ function RecepPage() {
     run(
       "refresh",
       async () => {
-        const results = await Promise.all([fetch("/api/source-feed/trt"), fetch("/api/source-feed/aa")]);
+        const results = await Promise.all([
+          fetch("/api/source-feed/trt", { credentials: "include" }),
+          fetch("/api/source-feed/aa", { credentials: "include" }),
+        ]);
         if (results.some((response) => !response.ok)) throw new Error("Kaynaklardan biri güncellenemedi.");
         await loadQueue("incoming");
         setMessage("Kaynaklar yenilendi; yeni başlıklar Gelen Haberler bölümüne eklendi.");
@@ -143,6 +166,7 @@ function RecepPage() {
         const response = await fetch("/api/recep/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ sourceFeedItemId: item.id }),
         });
         if (!response.ok) throw new Error(await responseMessage(response));
@@ -162,6 +186,7 @@ function RecepPage() {
         const response = await fetch("/api/recep/publish", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             articleId,
             coverImageUrl: enteredCover || undefined,
@@ -169,7 +194,7 @@ function RecepPage() {
         });
         if (!response.ok) throw new Error(await responseMessage(response));
         await loadQueue("published");
-        setMessage("Haber yayınlandı ve ana sayfada görünür durumda.");
+        setMessage("Haber başarıyla yayınlandı ve ana sayfaya eklendi.");
       },
       "Haber yayınlanamadı."
     );
@@ -178,10 +203,15 @@ function RecepPage() {
   const setCover = (item: QueueItem, mode: "manual" | "none" | "auto") => {
     if (!item.articleId) return;
     const articleId = item.articleId;
-    const urlToSave = (coverUrls[articleId] ?? item.coverImageUrl ?? "").trim();
-    if (mode === "manual" && !urlToSave) {
-      setMessage("Lütfen bir görsel URL'si girin.");
-      return;
+    let urlToSave = (coverUrls[articleId] ?? item.coverImageUrl ?? "").trim();
+    if (mode === "manual") {
+      if (!urlToSave) {
+        setMessage("Lütfen bir görsel URL'si girin.");
+        return;
+      }
+      if (!/^https?:\/\//i.test(urlToSave)) {
+        urlToSave = `https://${urlToSave}`;
+      }
     }
     return run(
       `cover-${articleId}`,
@@ -189,15 +219,43 @@ function RecepPage() {
         const response = await fetch("/api/recep/cover", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ articleId, mode, imageUrl: urlToSave }),
         });
         if (!response.ok) throw new Error(await responseMessage(response));
-        await loadQueue(view, queue?.pagination.page);
+
+        // Optimistically update item in local queue state so UI updates instantly
+        setQueue((current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            items: current.items.map((i) =>
+              i.articleId === articleId
+                ? {
+                    ...i,
+                    coverImageMode: mode,
+                    coverImageUrl: mode === "manual" ? urlToSave : mode === "none" ? null : i.coverImageUrl,
+                  }
+                : i
+            ),
+          };
+        });
+
+        // Clear local input buffer for this article
+        setCoverUrls((curr) => {
+          const next = { ...curr };
+          delete next[articleId];
+          return next;
+        });
+
+        setSavedCoverId(articleId);
+        setTimeout(() => setSavedCoverId(null), 3500);
+
         setMessage(
           mode === "none"
             ? "Kapak görseli kaldırıldı (haber görselsiz ayarlandı)."
             : mode === "manual"
-            ? (item.status === "published" ? "Yayındaki haberin kapak görseli güncellendi." : "Görsel URL'si başarıyla kaydedildi.")
+            ? (item.status === "published" ? "Yayındaki haberin kapak görseli güncellendi." : "Görsel URL'si kaydedildi.")
             : "Kaynak görseline dönüldü."
         );
       },
@@ -213,6 +271,7 @@ function RecepPage() {
         const response = await fetch("/api/recep/generate-cover", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ articleId: item.articleId }),
         });
         if (!response.ok) throw new Error(await responseMessage(response));
@@ -224,7 +283,8 @@ function RecepPage() {
   };
 
   const logout = async () => {
-    await fetch("/api/recep/logout", { method: "POST" });
+    await fetch("/api/recep/logout", { method: "POST", credentials: "include" });
+    localStorage.removeItem("mansetle_admin_session");
     setAuthenticated(false);
     setQueue(null);
     setCachedCounts(null);
@@ -361,29 +421,50 @@ function RecepPage() {
               return (
                 <article key={item.id} className="rounded-2xl border border-line bg-paper p-4 sm:p-5">
                   <div className="flex flex-col justify-between gap-4 md:flex-row">
-                    <div className="max-w-3xl">
-                      <p className="text-xs font-bold tracking-wide text-buletin uppercase">{item.sourceName}</p>
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-2 block break-words font-serif text-lg font-bold hover:text-buletin sm:text-xl"
-                      >
-                        {item.status ? item.articleTitle : item.title}
-                      </a>
-                      {timestamp ? <p className="mt-2 text-xs text-muted">{timestamp}</p> : null}
+                    <div className="flex gap-4 max-w-3xl">
+                      {/* Küçük Liste Kapak Önizleme (Varsa) */}
+                      {item.coverImageUrl && item.coverImageMode !== "none" ? (
+                        <div className="hidden sm:block size-20 shrink-0 overflow-hidden rounded-xl border border-line bg-soft">
+                          <img
+                            src={item.coverImageUrl}
+                            alt=""
+                            referrerPolicy="no-referrer"
+                            className="size-full object-cover"
+                          />
+                        </div>
+                      ) : null}
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-bold tracking-wide text-buletin uppercase">{item.sourceName}</p>
+                          {savedCoverId === item.articleId ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                              <Check className="size-3" /> Kapak güncellendi
+                            </span>
+                          ) : null}
+                        </div>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 block break-words font-serif text-lg font-bold hover:text-buletin sm:text-xl"
+                        >
+                          {item.status ? item.articleTitle : item.title}
+                        </a>
+                        {timestamp ? <p className="mt-2 text-xs text-muted">{timestamp}</p> : null}
+                      </div>
                     </div>
 
-                    <div className="w-full shrink-0 md:w-auto">
+                    <div className="w-full shrink-0 md:w-auto flex items-center gap-2">
                       {item.status === "published" ? (
-                        <span className="inline-flex rounded-full bg-emerald-600/15 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                          Yayında
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/15 px-3 py-1.5 text-xs font-bold text-emerald-700">
+                          <Check className="size-3.5" /> Yayında
                         </span>
                       ) : hasArticle ? (
                         <ActionButton
                           disabled={busy === `publish-${item.articleId}`}
                           onClick={() => void publish(item)}
-                          className="bg-buletin text-white"
+                          className="bg-buletin text-white shadow-sm hover:opacity-95"
                         >
                           {busy === `publish-${item.articleId}` ? (
                             <LoaderCircle className="size-4 animate-spin" />
@@ -412,7 +493,7 @@ function RecepPage() {
                   {hasArticle ? (
                     <details className="mt-5 border-t border-line pt-4">
                       <summary className="cursor-pointer text-sm font-bold text-ink hover:text-buletin">
-                        {item.status === "published" ? "Yayınlanan metni ve kapağı düzenle" : "Taslağı ve kapağı incele"}
+                        {item.status === "published" ? "Kapak görselini veya metni düzenle" : "Taslağı ve kapağı incele"}
                       </summary>
                       <h3 className="mt-4 break-words font-serif text-xl font-bold">{item.articleTitle}</h3>
                       <p className="mt-2 text-sm font-medium text-muted">{item.articleSummary}</p>
@@ -420,13 +501,13 @@ function RecepPage() {
                         {item.articleBody}
                       </div>
 
-                      <div className="mt-6 rounded-xl border border-line bg-surface p-3 sm:p-4">
+                      <div className="mt-6 rounded-xl border border-line bg-surface p-4 sm:p-5">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="font-semibold text-ink">Kapak görseli</p>
+                              <p className="font-bold text-ink">Kapak görseli</p>
                               <span
-                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                                   item.coverImageMode === "ai"
                                     ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
                                     : item.coverImageMode === "manual"
@@ -447,8 +528,8 @@ function RecepPage() {
                             </div>
                             <p className="mt-1 text-xs text-muted">
                               {item.status === "published"
-                                ? "Yeni bir URL girip kaydedebilir veya AI ile yeniden üretebilirsin."
-                                : "URL girerek veya AI ile kapak belirle. Yayınla butonuna bastığında bu görsel kullanılır."}
+                                ? "Görsel URL'si yapıştırıp 'Kapağı Kaydet' butonuna bastığında sitedeki kapak anında güncellenir."
+                                : "Görsel bağlantısı girebilir veya AI ile üretebilirsin. 'Yayınla' butonuna bastığında otomatik kaydedilir."}
                             </p>
                           </div>
                           <ActionButton
@@ -465,9 +546,9 @@ function RecepPage() {
                           </ActionButton>
                         </div>
 
-                        {/* Önizleme Alanı */}
+                        {/* Canlı Görsel Önizleme */}
                         {effectiveCover && item.coverImageMode !== "none" ? (
-                          <div className="relative mt-3 aspect-video max-w-sm overflow-hidden rounded-xl border border-line bg-soft">
+                          <div className="relative mt-3 aspect-video max-w-sm overflow-hidden rounded-xl border border-line bg-soft shadow-xs">
                             <img
                               src={effectiveCover}
                               alt="Kapak önizleme"
@@ -477,8 +558,8 @@ function RecepPage() {
                               onLoad={() => setImageErrors((prev) => ({ ...prev, [item.articleId!]: false }))}
                             />
                             {imageErrors[item.articleId!] ? (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/75 p-3 text-center text-xs font-medium text-rose-300">
-                                ⚠️ Görsel yüklenemedi. Bağlantıyı veya kaynağın erişim iznini kontrol edin.
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-3 text-center text-xs font-semibold text-rose-300">
+                                ⚠️ Görsel yüklenemedi. Bağlantıyı kontrol edin.
                               </div>
                             ) : null}
                           </div>
@@ -489,7 +570,7 @@ function RecepPage() {
                             e.preventDefault();
                             void setCover(item, "manual");
                           }}
-                          className="mt-3 flex flex-col gap-2 sm:flex-row"
+                          className="mt-4 flex flex-col gap-2.5 sm:flex-row"
                         >
                           <input
                             value={coverUrls[item.articleId!] ?? item.coverImageUrl ?? ""}
@@ -499,27 +580,27 @@ function RecepPage() {
                               setImageErrors((prev) => ({ ...prev, [item.articleId!]: false }));
                             }}
                             placeholder="https://... görsel URL'si yapıştırın"
-                            className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-paper px-3 text-sm outline-none focus:border-buletin"
+                            className="h-11 min-w-0 flex-1 rounded-lg border border-line bg-paper px-3.5 text-sm outline-none focus:border-buletin focus:ring-1 focus:ring-buletin"
                           />
                           <ActionButton
                             type="submit"
                             disabled={busy === `cover-${item.articleId}`}
-                            className="min-h-10 border border-line bg-paper px-3 text-xs text-ink hover:border-buletin"
+                            className="min-h-11 bg-buletin text-white px-5 text-sm shadow-xs hover:opacity-95"
                           >
                             {busy === `cover-${item.articleId}` ? (
-                              <LoaderCircle className="size-3.5 animate-spin" />
+                              <LoaderCircle className="size-4 animate-spin" />
                             ) : (
-                              <Link2 className="size-3.5" />
+                              <Save className="size-4" />
                             )}
-                            URL kaydet
+                            Kapağı Kaydet
                           </ActionButton>
                         </form>
 
-                        <div className="mt-3 grid gap-2 sm:flex sm:flex-wrap">
+                        <div className="mt-3.5 flex flex-wrap gap-2">
                           <ActionButton
                             disabled={busy === `cover-${item.articleId}`}
                             onClick={() => void setCover(item, "none")}
-                            className="min-h-9 border border-line px-3 text-xs hover:border-amber-500/50"
+                            className="min-h-9 border border-line bg-paper px-3 text-xs text-muted hover:border-amber-500/50 hover:text-amber-700"
                           >
                             <ImageOff className="size-3.5" /> Görseli kaldır
                           </ActionButton>
