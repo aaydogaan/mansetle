@@ -41,6 +41,7 @@ export function ArticleCard({ article, variant = "grid", className, imageClass }
           <img
             src={article.image}
             alt=""
+            referrerPolicy="no-referrer"
             className={cn("h-full w-full object-cover", imageClass ?? "min-h-[340px]")}
           />
           <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/25 to-black/5" />
@@ -66,6 +67,7 @@ export function ArticleCard({ article, variant = "grid", className, imageClass }
           <img
             src={article.image}
             alt=""
+            referrerPolicy="no-referrer"
             className={cn("w-full rounded-xl object-cover", imageClass ?? "h-[118px]")}
           />
           <div className="mt-3">
@@ -86,7 +88,7 @@ export function ArticleCard({ article, variant = "grid", className, imageClass }
     return (
       <Link to="/haber/$slug" params={{ slug: article.slug }} className={cn("group block", className)}>
         <article className="relative overflow-hidden rounded-2xl">
-          <img src={article.image} alt="" className={cn("w-full object-cover", imageClass ?? "h-[340px] md:h-[420px]")} />
+          <img src={article.image} alt="" referrerPolicy="no-referrer" className={cn("w-full object-cover", imageClass ?? "h-[340px] md:h-[420px]")} />
           <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
             <MetaRow article={article} light />
@@ -107,6 +109,7 @@ export function ArticleCard({ article, variant = "grid", className, imageClass }
         <img
           src={article.image}
           alt=""
+          referrerPolicy="no-referrer"
           className={cn("w-full rounded-xl object-cover", imageClass ?? "aspect-4/3")}
         />
         <div className="mt-3.5">

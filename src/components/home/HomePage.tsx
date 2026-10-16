@@ -4,7 +4,7 @@ import { categoryNames } from "@/lib/site";
 
 function ArticleImage({ article, className }: { article: LiveArticle; className: string }) {
   if (!article.imageUrl) return <div className={`${className} grid place-items-center bg-gradient-to-br from-buletin/90 via-buletin to-ink p-6 text-center font-serif text-2xl font-bold text-white`}><span>{categoryNames[article.category] ?? "Mansetle"}</span></div>;
-  return <img src={article.imageUrl} alt="" className={className} loading="eager" />;
+  return <img src={article.imageUrl} alt="" className={className} loading="eager" referrerPolicy="no-referrer" />;
 }
 
 function NewsCard({ article }: { article: LiveArticle }) {
