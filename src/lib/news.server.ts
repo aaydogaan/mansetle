@@ -1,15 +1,5 @@
 import { getSql } from "@/lib/db";
-
-export type LiveArticle = {
-  slug: string;
-  title: string;
-  summary: string;
-  bodyMarkdown: string;
-  category: string;
-  sourceName: string;
-  sourceUrl: string;
-  publishedAt: string;
-};
+import type { LiveArticle } from "@/lib/news";
 
 const selectArticle = `
   SELECT a.slug, a.title, a.summary, a.body_markdown AS "bodyMarkdown", a.category,

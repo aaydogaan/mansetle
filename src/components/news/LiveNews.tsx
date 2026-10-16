@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import type { LiveArticle } from "@/lib/news.server";
+import type { LiveArticle } from "@/lib/news";
 
 export function LiveNews({ category, limit = 24 }: { category?: string; limit?: number }) {
   const [articles, setArticles] = useState<LiveArticle[]>([]);

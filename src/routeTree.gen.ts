@@ -14,6 +14,7 @@ import { Route as BultenRouteImport } from './routes/bulten'
 import { Route as HikayelerRouteImport } from './routes/hikayeler'
 import { Route as KaydedilenlerRouteImport } from './routes/kaydedilenler'
 import { Route as RecepRouteImport } from './routes/recep'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ToplulukRouteImport } from './routes/topluluk'
 import { Route as YazRouteImport } from './routes/yaz'
 import { Route as ApiDatabaseStatusRouteImport } from './routes/api/database-status'
@@ -54,6 +55,11 @@ const KaydedilenlerRoute = KaydedilenlerRouteImport.update({
 const RecepRoute = RecepRouteImport.update({
   id: '/recep',
   path: '/recep',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ToplulukRoute = ToplulukRouteImport.update({
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/hikayeler': typeof HikayelerRoute
   '/kaydedilenler': typeof KaydedilenlerRoute
   '/recep': typeof RecepRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
   '/api/database-status': typeof ApiDatabaseStatusRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/hikayeler': typeof HikayelerRoute
   '/kaydedilenler': typeof KaydedilenlerRoute
   '/recep': typeof RecepRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
   '/api/database-status': typeof ApiDatabaseStatusRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/hikayeler': typeof HikayelerRoute
   '/kaydedilenler': typeof KaydedilenlerRoute
   '/recep': typeof RecepRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
   '/api/database-status': typeof ApiDatabaseStatusRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/hikayeler'
     | '/kaydedilenler'
     | '/recep'
+    | '/sitemap.xml'
     | '/topluluk'
     | '/yaz'
     | '/api/database-status'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/hikayeler'
     | '/kaydedilenler'
     | '/recep'
+    | '/sitemap.xml'
     | '/topluluk'
     | '/yaz'
     | '/api/database-status'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/hikayeler'
     | '/kaydedilenler'
     | '/recep'
+    | '/sitemap.xml'
     | '/topluluk'
     | '/yaz'
     | '/api/database-status'
@@ -285,6 +297,7 @@ export interface RootRouteChildren {
   HikayelerRoute: typeof HikayelerRoute
   KaydedilenlerRoute: typeof KaydedilenlerRoute
   RecepRoute: typeof RecepRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ToplulukRoute: typeof ToplulukRoute
   YazRoute: typeof YazRoute
   ApiDatabaseStatusRoute: typeof ApiDatabaseStatusRoute
@@ -337,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/recep'
       fullPath: '/recep'
       preLoaderRoute: typeof RecepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/topluluk': {
@@ -471,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   HikayelerRoute: HikayelerRoute,
   KaydedilenlerRoute: KaydedilenlerRoute,
   RecepRoute: RecepRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ToplulukRoute: ToplulukRoute,
   YazRoute: YazRoute,
   ApiDatabaseStatusRoute: ApiDatabaseStatusRoute,
