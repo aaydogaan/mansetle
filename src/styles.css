@@ -36,8 +36,8 @@ html.dark {
   --color-line: var(--color-line);
   --color-surface: var(--color-surface);
   --color-soft: var(--color-soft);
-  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --radius-card: 0.75rem;
   --radius-banner: 1.5rem;
   --radius-pill: 999px;
