@@ -6,5 +6,6 @@ export type LiveArticle = {
   category: string;
   sourceName: string;
   sourceUrl: string;
+  imageUrl: string | null;
   publishedAt: string;
 };
