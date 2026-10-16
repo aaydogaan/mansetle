@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BultenRouteImport } from './routes/bulten'
 import { Route as HikayelerRouteImport } from './routes/hikayeler'
 import { Route as KaydedilenlerRouteImport } from './routes/kaydedilenler'
+import { Route as RecepRouteImport } from './routes/recep'
 import { Route as ToplulukRouteImport } from './routes/topluluk'
 import { Route as YazRouteImport } from './routes/yaz'
 import { Route as ApiDatabaseStatusRouteImport } from './routes/api/database-status'
@@ -22,6 +23,12 @@ import { Route as KategoriSlugRouteImport } from './routes/kategori.$slug'
 import { Route as YazarSlugRouteImport } from './routes/yazar.$slug'
 import { Route as YazarlarIndexRouteImport } from './routes/yazarlar.index'
 import { Route as ApiNewsSlugRouteImport } from './routes/api/news/$slug'
+import { Route as ApiRecepGenerateRouteImport } from './routes/api/recep/generate'
+import { Route as ApiRecepLoginRouteImport } from './routes/api/recep/login'
+import { Route as ApiRecepLogoutRouteImport } from './routes/api/recep/logout'
+import { Route as ApiRecepPublishRouteImport } from './routes/api/recep/publish'
+import { Route as ApiRecepQueueRouteImport } from './routes/api/recep/queue'
+import { Route as ApiRecepSessionRouteImport } from './routes/api/recep/session'
 import { Route as ApiSourceFeedSourceRouteImport } from './routes/api/source-feed.$source'
 
 const IndexRoute = IndexRouteImport.update({
@@ -42,6 +49,11 @@ const HikayelerRoute = HikayelerRouteImport.update({
 const KaydedilenlerRoute = KaydedilenlerRouteImport.update({
   id: '/kaydedilenler',
   path: '/kaydedilenler',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecepRoute = RecepRouteImport.update({
+  id: '/recep',
+  path: '/recep',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ToplulukRoute = ToplulukRouteImport.update({
@@ -89,6 +101,36 @@ const ApiNewsSlugRoute = ApiNewsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ApiNewsRoute,
 } as any)
+const ApiRecepGenerateRoute = ApiRecepGenerateRouteImport.update({
+  id: '/api/recep/generate',
+  path: '/api/recep/generate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRecepLoginRoute = ApiRecepLoginRouteImport.update({
+  id: '/api/recep/login',
+  path: '/api/recep/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRecepLogoutRoute = ApiRecepLogoutRouteImport.update({
+  id: '/api/recep/logout',
+  path: '/api/recep/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRecepPublishRoute = ApiRecepPublishRouteImport.update({
+  id: '/api/recep/publish',
+  path: '/api/recep/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRecepQueueRoute = ApiRecepQueueRouteImport.update({
+  id: '/api/recep/queue',
+  path: '/api/recep/queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRecepSessionRoute = ApiRecepSessionRouteImport.update({
+  id: '/api/recep/session',
+  path: '/api/recep/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSourceFeedSourceRoute = ApiSourceFeedSourceRouteImport.update({
   id: '/api/source-feed/$source',
   path: '/api/source-feed/$source',
@@ -100,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/bulten': typeof BultenRoute
   '/hikayeler': typeof HikayelerRoute
   '/kaydedilenler': typeof KaydedilenlerRoute
+  '/recep': typeof RecepRoute
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
   '/api/database-status': typeof ApiDatabaseStatusRoute
@@ -109,6 +152,12 @@ export interface FileRoutesByFullPath {
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar/': typeof YazarlarIndexRoute
   '/api/news/$slug': typeof ApiNewsSlugRoute
+  '/api/recep/generate': typeof ApiRecepGenerateRoute
+  '/api/recep/login': typeof ApiRecepLoginRoute
+  '/api/recep/logout': typeof ApiRecepLogoutRoute
+  '/api/recep/publish': typeof ApiRecepPublishRoute
+  '/api/recep/queue': typeof ApiRecepQueueRoute
+  '/api/recep/session': typeof ApiRecepSessionRoute
   '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRoutesByTo {
@@ -116,6 +165,7 @@ export interface FileRoutesByTo {
   '/bulten': typeof BultenRoute
   '/hikayeler': typeof HikayelerRoute
   '/kaydedilenler': typeof KaydedilenlerRoute
+  '/recep': typeof RecepRoute
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
   '/api/database-status': typeof ApiDatabaseStatusRoute
@@ -125,6 +175,12 @@ export interface FileRoutesByTo {
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar': typeof YazarlarIndexRoute
   '/api/news/$slug': typeof ApiNewsSlugRoute
+  '/api/recep/generate': typeof ApiRecepGenerateRoute
+  '/api/recep/login': typeof ApiRecepLoginRoute
+  '/api/recep/logout': typeof ApiRecepLogoutRoute
+  '/api/recep/publish': typeof ApiRecepPublishRoute
+  '/api/recep/queue': typeof ApiRecepQueueRoute
+  '/api/recep/session': typeof ApiRecepSessionRoute
   '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRoutesById {
@@ -133,6 +189,7 @@ export interface FileRoutesById {
   '/bulten': typeof BultenRoute
   '/hikayeler': typeof HikayelerRoute
   '/kaydedilenler': typeof KaydedilenlerRoute
+  '/recep': typeof RecepRoute
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
   '/api/database-status': typeof ApiDatabaseStatusRoute
@@ -142,6 +199,12 @@ export interface FileRoutesById {
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar/': typeof YazarlarIndexRoute
   '/api/news/$slug': typeof ApiNewsSlugRoute
+  '/api/recep/generate': typeof ApiRecepGenerateRoute
+  '/api/recep/login': typeof ApiRecepLoginRoute
+  '/api/recep/logout': typeof ApiRecepLogoutRoute
+  '/api/recep/publish': typeof ApiRecepPublishRoute
+  '/api/recep/queue': typeof ApiRecepQueueRoute
+  '/api/recep/session': typeof ApiRecepSessionRoute
   '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRouteTypes {
@@ -151,6 +214,7 @@ export interface FileRouteTypes {
     | '/bulten'
     | '/hikayeler'
     | '/kaydedilenler'
+    | '/recep'
     | '/topluluk'
     | '/yaz'
     | '/api/database-status'
@@ -160,6 +224,12 @@ export interface FileRouteTypes {
     | '/yazar/$slug'
     | '/yazarlar/'
     | '/api/news/$slug'
+    | '/api/recep/generate'
+    | '/api/recep/login'
+    | '/api/recep/logout'
+    | '/api/recep/publish'
+    | '/api/recep/queue'
+    | '/api/recep/session'
     | '/api/source-feed/$source'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -167,6 +237,7 @@ export interface FileRouteTypes {
     | '/bulten'
     | '/hikayeler'
     | '/kaydedilenler'
+    | '/recep'
     | '/topluluk'
     | '/yaz'
     | '/api/database-status'
@@ -176,6 +247,12 @@ export interface FileRouteTypes {
     | '/yazar/$slug'
     | '/yazarlar'
     | '/api/news/$slug'
+    | '/api/recep/generate'
+    | '/api/recep/login'
+    | '/api/recep/logout'
+    | '/api/recep/publish'
+    | '/api/recep/queue'
+    | '/api/recep/session'
     | '/api/source-feed/$source'
   id:
     | '__root__'
@@ -183,6 +260,7 @@ export interface FileRouteTypes {
     | '/bulten'
     | '/hikayeler'
     | '/kaydedilenler'
+    | '/recep'
     | '/topluluk'
     | '/yaz'
     | '/api/database-status'
@@ -192,6 +270,12 @@ export interface FileRouteTypes {
     | '/yazar/$slug'
     | '/yazarlar/'
     | '/api/news/$slug'
+    | '/api/recep/generate'
+    | '/api/recep/login'
+    | '/api/recep/logout'
+    | '/api/recep/publish'
+    | '/api/recep/queue'
+    | '/api/recep/session'
     | '/api/source-feed/$source'
   fileRoutesById: FileRoutesById
 }
@@ -200,6 +284,7 @@ export interface RootRouteChildren {
   BultenRoute: typeof BultenRoute
   HikayelerRoute: typeof HikayelerRoute
   KaydedilenlerRoute: typeof KaydedilenlerRoute
+  RecepRoute: typeof RecepRoute
   ToplulukRoute: typeof ToplulukRoute
   YazRoute: typeof YazRoute
   ApiDatabaseStatusRoute: typeof ApiDatabaseStatusRoute
@@ -208,6 +293,12 @@ export interface RootRouteChildren {
   KategoriSlugRoute: typeof KategoriSlugRoute
   YazarSlugRoute: typeof YazarSlugRoute
   YazarlarIndexRoute: typeof YazarlarIndexRoute
+  ApiRecepGenerateRoute: typeof ApiRecepGenerateRoute
+  ApiRecepLoginRoute: typeof ApiRecepLoginRoute
+  ApiRecepLogoutRoute: typeof ApiRecepLogoutRoute
+  ApiRecepPublishRoute: typeof ApiRecepPublishRoute
+  ApiRecepQueueRoute: typeof ApiRecepQueueRoute
+  ApiRecepSessionRoute: typeof ApiRecepSessionRoute
   ApiSourceFeedSourceRoute: typeof ApiSourceFeedSourceRoute
 }
 
@@ -239,6 +330,13 @@ declare module '@tanstack/react-router' {
       path: '/kaydedilenler'
       fullPath: '/kaydedilenler'
       preLoaderRoute: typeof KaydedilenlerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recep': {
+      id: '/recep'
+      path: '/recep'
+      fullPath: '/recep'
+      preLoaderRoute: typeof RecepRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/topluluk': {
@@ -304,6 +402,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNewsSlugRouteImport
       parentRoute: typeof ApiNewsRoute
     }
+    '/api/recep/generate': {
+      id: '/api/recep/generate'
+      path: '/api/recep/generate'
+      fullPath: '/api/recep/generate'
+      preLoaderRoute: typeof ApiRecepGenerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/recep/login': {
+      id: '/api/recep/login'
+      path: '/api/recep/login'
+      fullPath: '/api/recep/login'
+      preLoaderRoute: typeof ApiRecepLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/recep/logout': {
+      id: '/api/recep/logout'
+      path: '/api/recep/logout'
+      fullPath: '/api/recep/logout'
+      preLoaderRoute: typeof ApiRecepLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/recep/publish': {
+      id: '/api/recep/publish'
+      path: '/api/recep/publish'
+      fullPath: '/api/recep/publish'
+      preLoaderRoute: typeof ApiRecepPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/recep/queue': {
+      id: '/api/recep/queue'
+      path: '/api/recep/queue'
+      fullPath: '/api/recep/queue'
+      preLoaderRoute: typeof ApiRecepQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/recep/session': {
+      id: '/api/recep/session'
+      path: '/api/recep/session'
+      fullPath: '/api/recep/session'
+      preLoaderRoute: typeof ApiRecepSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/source-feed/$source': {
       id: '/api/source-feed/$source'
       path: '/api/source-feed/$source'
@@ -330,6 +470,7 @@ const rootRouteChildren: RootRouteChildren = {
   BultenRoute: BultenRoute,
   HikayelerRoute: HikayelerRoute,
   KaydedilenlerRoute: KaydedilenlerRoute,
+  RecepRoute: RecepRoute,
   ToplulukRoute: ToplulukRoute,
   YazRoute: YazRoute,
   ApiDatabaseStatusRoute: ApiDatabaseStatusRoute,
@@ -338,6 +479,12 @@ const rootRouteChildren: RootRouteChildren = {
   KategoriSlugRoute: KategoriSlugRoute,
   YazarSlugRoute: YazarSlugRoute,
   YazarlarIndexRoute: YazarlarIndexRoute,
+  ApiRecepGenerateRoute: ApiRecepGenerateRoute,
+  ApiRecepLoginRoute: ApiRecepLoginRoute,
+  ApiRecepLogoutRoute: ApiRecepLogoutRoute,
+  ApiRecepPublishRoute: ApiRecepPublishRoute,
+  ApiRecepQueueRoute: ApiRecepQueueRoute,
+  ApiRecepSessionRoute: ApiRecepSessionRoute,
   ApiSourceFeedSourceRoute: ApiSourceFeedSourceRoute,
 }
 export const routeTree = rootRouteImport
