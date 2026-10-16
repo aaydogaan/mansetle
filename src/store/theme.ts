@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark";
-const THEME_KEY = "mansetle-theme";
+const THEME_KEY = "mansetle-theme-v2";
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";
