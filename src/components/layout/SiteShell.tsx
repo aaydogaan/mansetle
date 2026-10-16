@@ -2,14 +2,12 @@ import type { ReactNode } from "react";
 import { ArrowUp } from "lucide-react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
-import { Newsletter } from "./Newsletter";
 
-export function SiteShell({ children, showNewsletter = true }: { children: ReactNode; showNewsletter?: boolean }) {
+export function SiteShell({ children, showNewsletter: _showNewsletter = false }: { children: ReactNode; showNewsletter?: boolean }) {
   return (
     <div className="min-h-screen bg-surface text-ink">
       <Header />
       <main>{children}</main>
-      {showNewsletter ? <Newsletter /> : null}
       <Footer />
       <button
         type="button"

@@ -16,10 +16,12 @@ import { Route as KaydedilenlerRouteImport } from './routes/kaydedilenler'
 import { Route as ToplulukRouteImport } from './routes/topluluk'
 import { Route as YazRouteImport } from './routes/yaz'
 import { Route as ApiDatabaseStatusRouteImport } from './routes/api/database-status'
+import { Route as ApiNewsRouteImport } from './routes/api/news'
 import { Route as HaberSlugRouteImport } from './routes/haber.$slug'
 import { Route as KategoriSlugRouteImport } from './routes/kategori.$slug'
 import { Route as YazarSlugRouteImport } from './routes/yazar.$slug'
 import { Route as YazarlarIndexRouteImport } from './routes/yazarlar.index'
+import { Route as ApiNewsSlugRouteImport } from './routes/api/news/$slug'
 import { Route as ApiSourceFeedSourceRouteImport } from './routes/api/source-feed.$source'
 
 const IndexRoute = IndexRouteImport.update({
@@ -57,6 +59,11 @@ const ApiDatabaseStatusRoute = ApiDatabaseStatusRouteImport.update({
   path: '/api/database-status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiNewsRoute = ApiNewsRouteImport.update({
+  id: '/api/news',
+  path: '/api/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HaberSlugRoute = HaberSlugRouteImport.update({
   id: '/haber/$slug',
   path: '/haber/$slug',
@@ -77,6 +84,11 @@ const YazarlarIndexRoute = YazarlarIndexRouteImport.update({
   path: '/yazarlar/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiNewsSlugRoute = ApiNewsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ApiNewsRoute,
+} as any)
 const ApiSourceFeedSourceRoute = ApiSourceFeedSourceRouteImport.update({
   id: '/api/source-feed/$source',
   path: '/api/source-feed/$source',
@@ -91,10 +103,12 @@ export interface FileRoutesByFullPath {
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
   '/api/database-status': typeof ApiDatabaseStatusRoute
+  '/api/news': typeof ApiNewsRouteWithChildren
   '/haber/$slug': typeof HaberSlugRoute
   '/kategori/$slug': typeof KategoriSlugRoute
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar/': typeof YazarlarIndexRoute
+  '/api/news/$slug': typeof ApiNewsSlugRoute
   '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRoutesByTo {
@@ -105,10 +119,12 @@ export interface FileRoutesByTo {
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
   '/api/database-status': typeof ApiDatabaseStatusRoute
+  '/api/news': typeof ApiNewsRouteWithChildren
   '/haber/$slug': typeof HaberSlugRoute
   '/kategori/$slug': typeof KategoriSlugRoute
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar': typeof YazarlarIndexRoute
+  '/api/news/$slug': typeof ApiNewsSlugRoute
   '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRoutesById {
@@ -120,10 +136,12 @@ export interface FileRoutesById {
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
   '/api/database-status': typeof ApiDatabaseStatusRoute
+  '/api/news': typeof ApiNewsRouteWithChildren
   '/haber/$slug': typeof HaberSlugRoute
   '/kategori/$slug': typeof KategoriSlugRoute
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar/': typeof YazarlarIndexRoute
+  '/api/news/$slug': typeof ApiNewsSlugRoute
   '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRouteTypes {
@@ -136,10 +154,12 @@ export interface FileRouteTypes {
     | '/topluluk'
     | '/yaz'
     | '/api/database-status'
+    | '/api/news'
     | '/haber/$slug'
     | '/kategori/$slug'
     | '/yazar/$slug'
     | '/yazarlar/'
+    | '/api/news/$slug'
     | '/api/source-feed/$source'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -150,10 +170,12 @@ export interface FileRouteTypes {
     | '/topluluk'
     | '/yaz'
     | '/api/database-status'
+    | '/api/news'
     | '/haber/$slug'
     | '/kategori/$slug'
     | '/yazar/$slug'
     | '/yazarlar'
+    | '/api/news/$slug'
     | '/api/source-feed/$source'
   id:
     | '__root__'
@@ -164,10 +186,12 @@ export interface FileRouteTypes {
     | '/topluluk'
     | '/yaz'
     | '/api/database-status'
+    | '/api/news'
     | '/haber/$slug'
     | '/kategori/$slug'
     | '/yazar/$slug'
     | '/yazarlar/'
+    | '/api/news/$slug'
     | '/api/source-feed/$source'
   fileRoutesById: FileRoutesById
 }
@@ -179,6 +203,7 @@ export interface RootRouteChildren {
   ToplulukRoute: typeof ToplulukRoute
   YazRoute: typeof YazRoute
   ApiDatabaseStatusRoute: typeof ApiDatabaseStatusRoute
+  ApiNewsRoute: typeof ApiNewsRouteWithChildren
   HaberSlugRoute: typeof HaberSlugRoute
   KategoriSlugRoute: typeof KategoriSlugRoute
   YazarSlugRoute: typeof YazarSlugRoute
@@ -237,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDatabaseStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/news': {
+      id: '/api/news'
+      path: '/api/news'
+      fullPath: '/api/news'
+      preLoaderRoute: typeof ApiNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/haber/$slug': {
       id: '/haber/$slug'
       path: '/haber/$slug'
@@ -265,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof YazarlarIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/news/$slug': {
+      id: '/api/news/$slug'
+      path: '/$slug'
+      fullPath: '/api/news/$slug'
+      preLoaderRoute: typeof ApiNewsSlugRouteImport
+      parentRoute: typeof ApiNewsRoute
+    }
     '/api/source-feed/$source': {
       id: '/api/source-feed/$source'
       path: '/api/source-feed/$source'
@@ -275,6 +314,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ApiNewsRouteChildren {
+  ApiNewsSlugRoute: typeof ApiNewsSlugRoute
+}
+
+const ApiNewsRouteChildren: ApiNewsRouteChildren = {
+  ApiNewsSlugRoute: ApiNewsSlugRoute,
+}
+
+const ApiNewsRouteWithChildren =
+  ApiNewsRoute._addFileChildren(ApiNewsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BultenRoute: BultenRoute,
@@ -283,6 +333,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToplulukRoute: ToplulukRoute,
   YazRoute: YazRoute,
   ApiDatabaseStatusRoute: ApiDatabaseStatusRoute,
+  ApiNewsRoute: ApiNewsRouteWithChildren,
   HaberSlugRoute: HaberSlugRoute,
   KategoriSlugRoute: KategoriSlugRoute,
   YazarSlugRoute: YazarSlugRoute,

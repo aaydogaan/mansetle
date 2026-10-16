@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bookmark, Menu, Moon, Sun, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
 import { navLinks } from "@/data/content";
 import { useTheme } from "@/store/theme";
 import { cn } from "@/lib/utils";
@@ -64,23 +64,6 @@ export function Header() {
               <span className="size-[19px]" />
             )}
           </button>
-
-          <Link
-            to="/kaydedilenler"
-            aria-label="Kaydedilenler"
-            title="Kaydedilen Haberler"
-            className="inline-flex size-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-paper hover:text-buletin"
-          >
-            <Bookmark className="size-[19px]" strokeWidth={1.8} />
-          </Link>
-
-          <Link to="/kaydedilenler" aria-label="Hesap" className="ml-1">
-            <img
-              src="/avatars/user.jpg"
-              alt="Hesap"
-              className="size-9 rounded-full object-cover ring-1 ring-line transition-all hover:ring-buletin"
-            />
-          </Link>
 
           <button
             type="button"

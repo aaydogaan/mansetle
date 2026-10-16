@@ -1,73 +1,22 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Bookmark, BookmarkCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { ArticleCard, CategoryRead, MetaRow } from "@/components/news/ArticleCard";
-import { getArticle, relatedArticles } from "@/data/content";
-import { useSaved } from "@/store/saved";
+import type { LiveArticle } from "@/lib/news.server";
 
-export const Route = createFileRoute("/haber/$slug")({
-  loader: ({ params }) => {
-    const article = getArticle(params.slug);
-    if (!article) throw notFound();
-    return { article, related: relatedArticles(article) };
-  },
-  component: ArticlePage,
-  head: ({ loaderData }) => ({
-    meta: [{ title: loaderData ? `${loaderData.article.title} — Mansetle` : "Mansetle" }],
-  }),
-});
+export const Route = createFileRoute("/haber/$slug")({ component: ArticlePage });
 
 function ArticlePage() {
-  const { article, related } = Route.useLoaderData();
-  const { has, toggle } = useSaved();
-  const saved = has(article.slug);
+  const { slug } = Route.useParams();
+  const [article, setArticle] = useState<LiveArticle | null>(null);
+  const [ready, setReady] = useState(false);
 
-  return (
-    <SiteShell>
-      <article className="container-buletin py-8 md:py-12">
-        <p className="text-[13px] text-muted">
-          <Link to="/" className="hover:text-buletin">
-            Ana Sayfa
-          </Link>
-          <span className="mx-2">/</span>
-          <Link to="/kategori/$slug" params={{ slug: article.categorySlug }} className="hover:text-buletin">
-            {article.category}
-          </Link>
-        </p>
-        <h1 className="mt-4 max-w-3xl font-serif font-bold text-[36px] leading-[1.15] md:text-[48px]">{article.title}</h1>
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <MetaRow article={article} />
-            <div className="mt-2">
-              <CategoryRead article={article} />
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => toggle(article.slug)}
-            className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[13px] font-medium hover:border-ink transition-colors"
-          >
-            {saved ? <BookmarkCheck className="size-4 text-buletin" /> : <Bookmark className="size-4" />}
-            {saved ? "Kaydedildi" : "Haberi Kaydet"}
-          </button>
-        </div>
-        <img src={article.image} alt="" className="mt-8 w-full rounded-2xl object-cover md:max-h-[520px]" />
-        <div className="mx-auto mt-10 max-w-[680px] space-y-5 text-[17px] leading-[1.75] text-ink">
-          {article.body.map((p) => (
-            <p key={p.slice(0, 32)}>{p}</p>
-          ))}
-        </div>
-      </article>
-      {related.length > 0 ? (
-        <section className="container-buletin pb-8">
-          <h2 className="mb-6 font-serif font-bold text-[28px]">{article.category} Kategorisinden Diğer Haberler</h2>
-          <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
-            {related.map((item) => (
-              <ArticleCard key={item.slug} article={item} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-    </SiteShell>
-  );
+  useEffect(() => {
+    fetch(`/api/news/${encodeURIComponent(slug)}`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload: { article?: LiveArticle } | null) => setArticle(payload?.article ?? null))
+      .catch(() => setArticle(null))
+      .finally(() => setReady(true));
+  }, [slug]);
+
+  return <SiteShell>{!ready ? <p className="container-buletin py-16 text-muted">Haber yükleniyor…</p> : !article ? <p className="container-buletin py-16 text-muted">Haber bulunamadı.</p> : <article className="container-buletin py-10 md:py-14"><p className="text-sm text-muted"><Link to="/" className="hover:text-buletin">Ana Sayfa</Link><span className="mx-2">/</span><Link to="/kategori/$slug" params={{ slug: article.category }} className="hover:text-buletin">{article.category}</Link></p><p className="mt-8 text-xs font-semibold text-buletin">{article.sourceName}</p><h1 className="mt-3 max-w-4xl font-serif text-[36px] leading-[1.15] font-bold text-ink md:text-[52px]">{article.title}</h1><p className="mt-5 max-w-3xl text-lg leading-relaxed text-muted">{article.summary}</p><div className="mt-10 max-w-3xl space-y-5 text-[17px] leading-[1.8] text-ink">{article.bodyMarkdown.split(/\n{2,}/).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div><a className="mt-10 inline-flex text-sm font-semibold text-buletin hover:text-buletin-dark" href={article.sourceUrl} target="_blank" rel="noreferrer">Kaynağa git</a></article>}</SiteShell>;
 }
