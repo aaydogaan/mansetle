@@ -94,6 +94,36 @@ function createPostgresSql(): Promise<Sql> {
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
     const pool = new Pool({ connectionString: databaseUrl });
+    const migrations = import.meta.glob("/migrations/*.sql", {
+      query: "?raw",
+      import: "default",
+      eager: true,
+    }) as Record<string, string>;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(8437261)");
+      await client.query(
+        "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
+      );
+      const applied = (await client.query<{ name: string }>("SELECT name FROM _migrations"))
+        .rows.map((row) => row.name);
+      for (const { name, path } of pendingMigrations(Object.keys(migrations), applied)) {
+        await client.query(migrations[path]);
+        await client.query("INSERT INTO _migrations (name) VALUES ($1)", [name]);
+      }
+      await client.query("COMMIT");
+    } catch (error) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        void 0;
+      }
+      await pool.end();
+      throw error;
+    } finally {
+      client.release();
+    }
     return toSql(async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
