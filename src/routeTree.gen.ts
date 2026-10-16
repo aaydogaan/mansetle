@@ -24,7 +24,9 @@ import { Route as KategoriSlugRouteImport } from './routes/kategori.$slug'
 import { Route as YazarSlugRouteImport } from './routes/yazar.$slug'
 import { Route as YazarlarIndexRouteImport } from './routes/yazarlar.index'
 import { Route as ApiNewsSlugRouteImport } from './routes/api/news/$slug'
+import { Route as ApiRecepCoverRouteImport } from './routes/api/recep/cover'
 import { Route as ApiRecepGenerateRouteImport } from './routes/api/recep/generate'
+import { Route as ApiRecepGenerateCoverRouteImport } from './routes/api/recep/generate-cover'
 import { Route as ApiRecepLoginRouteImport } from './routes/api/recep/login'
 import { Route as ApiRecepLogoutRouteImport } from './routes/api/recep/logout'
 import { Route as ApiRecepPublishRouteImport } from './routes/api/recep/publish'
@@ -107,9 +109,19 @@ const ApiNewsSlugRoute = ApiNewsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ApiNewsRoute,
 } as any)
+const ApiRecepCoverRoute = ApiRecepCoverRouteImport.update({
+  id: '/api/recep/cover',
+  path: '/api/recep/cover',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRecepGenerateRoute = ApiRecepGenerateRouteImport.update({
   id: '/api/recep/generate',
   path: '/api/recep/generate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRecepGenerateCoverRoute = ApiRecepGenerateCoverRouteImport.update({
+  id: '/api/recep/generate-cover',
+  path: '/api/recep/generate-cover',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRecepLoginRoute = ApiRecepLoginRouteImport.update({
@@ -159,7 +171,9 @@ export interface FileRoutesByFullPath {
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar/': typeof YazarlarIndexRoute
   '/api/news/$slug': typeof ApiNewsSlugRoute
+  '/api/recep/cover': typeof ApiRecepCoverRoute
   '/api/recep/generate': typeof ApiRecepGenerateRoute
+  '/api/recep/generate-cover': typeof ApiRecepGenerateCoverRoute
   '/api/recep/login': typeof ApiRecepLoginRoute
   '/api/recep/logout': typeof ApiRecepLogoutRoute
   '/api/recep/publish': typeof ApiRecepPublishRoute
@@ -183,7 +197,9 @@ export interface FileRoutesByTo {
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar': typeof YazarlarIndexRoute
   '/api/news/$slug': typeof ApiNewsSlugRoute
+  '/api/recep/cover': typeof ApiRecepCoverRoute
   '/api/recep/generate': typeof ApiRecepGenerateRoute
+  '/api/recep/generate-cover': typeof ApiRecepGenerateCoverRoute
   '/api/recep/login': typeof ApiRecepLoginRoute
   '/api/recep/logout': typeof ApiRecepLogoutRoute
   '/api/recep/publish': typeof ApiRecepPublishRoute
@@ -208,7 +224,9 @@ export interface FileRoutesById {
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar/': typeof YazarlarIndexRoute
   '/api/news/$slug': typeof ApiNewsSlugRoute
+  '/api/recep/cover': typeof ApiRecepCoverRoute
   '/api/recep/generate': typeof ApiRecepGenerateRoute
+  '/api/recep/generate-cover': typeof ApiRecepGenerateCoverRoute
   '/api/recep/login': typeof ApiRecepLoginRoute
   '/api/recep/logout': typeof ApiRecepLogoutRoute
   '/api/recep/publish': typeof ApiRecepPublishRoute
@@ -234,7 +252,9 @@ export interface FileRouteTypes {
     | '/yazar/$slug'
     | '/yazarlar/'
     | '/api/news/$slug'
+    | '/api/recep/cover'
     | '/api/recep/generate'
+    | '/api/recep/generate-cover'
     | '/api/recep/login'
     | '/api/recep/logout'
     | '/api/recep/publish'
@@ -258,7 +278,9 @@ export interface FileRouteTypes {
     | '/yazar/$slug'
     | '/yazarlar'
     | '/api/news/$slug'
+    | '/api/recep/cover'
     | '/api/recep/generate'
+    | '/api/recep/generate-cover'
     | '/api/recep/login'
     | '/api/recep/logout'
     | '/api/recep/publish'
@@ -282,7 +304,9 @@ export interface FileRouteTypes {
     | '/yazar/$slug'
     | '/yazarlar/'
     | '/api/news/$slug'
+    | '/api/recep/cover'
     | '/api/recep/generate'
+    | '/api/recep/generate-cover'
     | '/api/recep/login'
     | '/api/recep/logout'
     | '/api/recep/publish'
@@ -306,7 +330,9 @@ export interface RootRouteChildren {
   KategoriSlugRoute: typeof KategoriSlugRoute
   YazarSlugRoute: typeof YazarSlugRoute
   YazarlarIndexRoute: typeof YazarlarIndexRoute
+  ApiRecepCoverRoute: typeof ApiRecepCoverRoute
   ApiRecepGenerateRoute: typeof ApiRecepGenerateRoute
+  ApiRecepGenerateCoverRoute: typeof ApiRecepGenerateCoverRoute
   ApiRecepLoginRoute: typeof ApiRecepLoginRoute
   ApiRecepLogoutRoute: typeof ApiRecepLogoutRoute
   ApiRecepPublishRoute: typeof ApiRecepPublishRoute
@@ -422,11 +448,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNewsSlugRouteImport
       parentRoute: typeof ApiNewsRoute
     }
+    '/api/recep/cover': {
+      id: '/api/recep/cover'
+      path: '/api/recep/cover'
+      fullPath: '/api/recep/cover'
+      preLoaderRoute: typeof ApiRecepCoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/recep/generate': {
       id: '/api/recep/generate'
       path: '/api/recep/generate'
       fullPath: '/api/recep/generate'
       preLoaderRoute: typeof ApiRecepGenerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/recep/generate-cover': {
+      id: '/api/recep/generate-cover'
+      path: '/api/recep/generate-cover'
+      fullPath: '/api/recep/generate-cover'
+      preLoaderRoute: typeof ApiRecepGenerateCoverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/recep/login': {
@@ -500,7 +540,9 @@ const rootRouteChildren: RootRouteChildren = {
   KategoriSlugRoute: KategoriSlugRoute,
   YazarSlugRoute: YazarSlugRoute,
   YazarlarIndexRoute: YazarlarIndexRoute,
+  ApiRecepCoverRoute: ApiRecepCoverRoute,
   ApiRecepGenerateRoute: ApiRecepGenerateRoute,
+  ApiRecepGenerateCoverRoute: ApiRecepGenerateCoverRoute,
   ApiRecepLoginRoute: ApiRecepLoginRoute,
   ApiRecepLogoutRoute: ApiRecepLogoutRoute,
   ApiRecepPublishRoute: ApiRecepPublishRoute,

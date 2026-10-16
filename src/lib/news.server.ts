@@ -3,7 +3,9 @@ import type { LiveArticle } from "@/lib/news";
 
 const selectArticle = `
   SELECT a.slug, a.title, a.summary, a.body_markdown AS "bodyMarkdown", a.category,
-         s.name AS "sourceName", f.external_url AS "sourceUrl", f.image_url AS "imageUrl", a.published_at AS "publishedAt"
+         s.name AS "sourceName", f.external_url AS "sourceUrl",
+         CASE WHEN a.cover_image_mode = 'none' THEN NULL ELSE COALESCE(a.cover_image_url, f.image_url) END AS "imageUrl",
+         a.cover_image_mode AS "imageMode", a.published_at AS "publishedAt"
   FROM news_articles a
   JOIN source_feed_items f ON f.id = a.source_feed_item_id
   JOIN news_sources s ON s.id = f.source_id

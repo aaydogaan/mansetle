@@ -7,5 +7,6 @@ export type LiveArticle = {
   sourceName: string;
   sourceUrl: string;
   imageUrl: string | null;
+  imageMode: "auto" | "manual" | "ai" | "none";
   publishedAt: string;
 };
