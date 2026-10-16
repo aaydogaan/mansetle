@@ -44,6 +44,41 @@ export function formatTimeLabel(label: string): string {
   return res;
 }
 
+export function formatRelativeTime(value: string | null | undefined): string {
+  if (!value) return "Yeni";
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return "Yeni";
+  const now = Date.now();
+  const diffMinutes = Math.floor((now - date.getTime()) / 60000);
+  if (diffMinutes < 1) return "Az önce";
+  if (diffMinutes < 60) return `${diffMinutes} dakika önce`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} saat önce`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays} gün önce`;
+  return new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long" }).format(date);
+}
+
+export function formatFullDateTime(value: string | null | undefined): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+export function estimateReadTime(text: string | null | undefined): string {
+  if (!text) return "2 dk okuma";
+  const words = text.trim().split(/\s+/).length;
+  const minutes = Math.max(1, Math.round(words / 150));
+  return `${minutes} dk okuma`;
+}
+
 export function formatReadTime(readTime: string): string {
   if (!readTime) return "";
   let res = readTime.trim();
