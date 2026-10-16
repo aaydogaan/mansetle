@@ -33,7 +33,7 @@ export const Route = createRootRoute({
   component: RootComponent,
 });
 
-const themeScript = `(function(){try{var t=localStorage.getItem("mansetle-theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark");}else{document.documentElement.classList.remove("dark");}}catch(e){}})();`;
+const themeScript = `(function(){try{var t=localStorage.getItem("mansetle-theme");document.documentElement.classList.toggle("dark",t==="dark");}catch(e){}})();`;
 
 function RootComponent() {
   return (
