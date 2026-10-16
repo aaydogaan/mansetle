@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSql } from "@/lib/db";
+import { isSystemActive } from "@/lib/settings.server";
 
 type FeedItem = { title: string; url: string; publishedAt: string | null; imageUrl: string | null };
 
@@ -24,6 +25,10 @@ async function saveFeedItems(sourceId: keyof typeof feeds, feed: (typeof feeds)[
 
 export const Route = createFileRoute("/api/source-feed/$source")({
   server: { handlers: { GET: async ({ params }) => {
+    const active = await isSystemActive();
+    if (!active) {
+      return Response.json({ message: "Sistem duraklatıldı. Kaynak çekme kapalı.", items: [] });
+    }
     const feed = feeds[params.source as keyof typeof feeds];
     if (!feed) return Response.json({ error: "Bilinmeyen kaynak." }, { status: 404 });
     try {

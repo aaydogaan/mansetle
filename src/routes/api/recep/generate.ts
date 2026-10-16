@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getSql } from "@/lib/db";
 import { generateNewsDraft } from "@/lib/gemini.server";
 import { isAdmin } from "@/lib/recep-auth.server";
+import { isSystemActive } from "@/lib/settings.server";
 
 export function turkishSlugify(text: string): string {
   if (!text) return "";
@@ -39,6 +40,9 @@ export const Route = createFileRoute("/api/recep/generate")({
     handlers: {
       POST: async ({ request }) => {
         if (!isAdmin(request)) return Response.json({ error: "Yetkisiz." }, { status: 401 });
+        if (!(await isSystemActive())) {
+          return Response.json({ error: "Sistem duraklatılmıştır. Yeni taslak oluşturmak için önce sistemi aktifleştirin." }, { status: 403 });
+        }
         const body = (await request.json()) as { sourceFeedItemId?: number };
         if (!Number.isInteger(body.sourceFeedItemId)) return Response.json({ error: "Geçersiz haber." }, { status: 400 });
         const sql = await getSql();

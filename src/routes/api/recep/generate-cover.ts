@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSql } from "@/lib/db";
 import { isAdmin } from "@/lib/recep-auth.server";
+import { isSystemActive } from "@/lib/settings.server";
 
 type GeminiImageResponse = { output_image?: { data?: string; mime_type?: string }; steps?: Array<{ content?: Array<{ type?: string; data?: string; mime_type?: string }> }> };
 
@@ -13,6 +14,9 @@ function imageOutput(payload: GeminiImageResponse) {
 export const Route = createFileRoute("/api/recep/generate-cover")({
   server: { handlers: { POST: async ({ request }) => {
     if (!isAdmin(request)) return Response.json({ error: "Yetkisiz." }, { status: 401 });
+    if (!(await isSystemActive())) {
+      return Response.json({ error: "Sistem duraklatılmıştır. AI görsel üretmek için önce sistemi aktifleştirin." }, { status: 403 });
+    }
     const body = (await request.json()) as { articleId?: number };
     if (!Number.isInteger(body.articleId)) return Response.json({ error: "Geçersiz haber." }, { status: 400 });
     const apiKey = process.env.GEMINI_API_KEY;

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentProps, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, ChevronLeft, ChevronRight, CircleCheck, FileImage, FilePenLine, ImageOff, Inbox, LoaderCircle, LogOut, RefreshCw, Save, Send, Sparkles } from "lucide-react";
+import { AlertTriangle, Check, ChevronLeft, ChevronRight, CircleCheck, FileImage, FilePenLine, ImageOff, Inbox, LoaderCircle, LogOut, Pause, Play, RefreshCw, Save, Send, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/recep")({ component: RecepPage });
 
@@ -70,6 +70,46 @@ function RecepPage() {
   const [savedCoverId, setSavedCoverId] = useState<number | null>(null);
   const [coverUrls, setCoverUrls] = useState<Record<number, string>>({});
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const [systemActive, setSystemActive] = useState<boolean>(true);
+  const [showPauseModal, setShowPauseModal] = useState<boolean>(false);
+  const [togglingSystem, setTogglingSystem] = useState<boolean>(false);
+
+  const loadSettings = async () => {
+    try {
+      const response = await fetch("/api/recep/settings", { credentials: "include" });
+      if (response.ok) {
+        const payload = (await response.json()) as { active?: boolean };
+        if (typeof payload.active === "boolean") setSystemActive(payload.active);
+      }
+    } catch {
+      // Default to active
+    }
+  };
+
+  const toggleSystem = async (nextActive: boolean) => {
+    setTogglingSystem(true);
+    try {
+      const response = await fetch("/api/recep/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ active: nextActive }),
+      });
+      if (!response.ok) throw new Error(await responseMessage(response));
+      const payload = (await response.json()) as { active: boolean };
+      setSystemActive(payload.active);
+      setShowPauseModal(false);
+      setMessage(
+        payload.active
+          ? "Sistem aktifleştirildi. Kaynak çekme ve taslak üretimi açık."
+          : "Sistem duraklatıldı. Kaynak çekme ve Gemini yapay zeka üretimi geçici olarak kapatıldı (0 Token modu)."
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "İşlem tamamlanamadı.");
+    } finally {
+      setTogglingSystem(false);
+    }
+  };
 
   const loadQueue = async (nextView = view, page = 1) => {
     setLoadingView(true);
@@ -100,6 +140,7 @@ function RecepPage() {
         setAuthenticated(isAuth);
         if (isAuth) {
           localStorage.setItem("mansetle_admin_session", "1");
+          void loadSettings();
           return loadQueue("incoming");
         } else {
           localStorage.removeItem("mansetle_admin_session");
@@ -144,8 +185,12 @@ function RecepPage() {
     );
   };
 
-  const refreshSources = () =>
-    run(
+  const refreshSources = () => {
+    if (!systemActive) {
+      setMessage("Sistem duraklatılmıştır. Kaynakları yenilemek için önce 'Sistemi Aç' butonunu kullanın.");
+      return;
+    }
+    return run(
       "refresh",
       async () => {
         const results = await Promise.all([
@@ -158,9 +203,14 @@ function RecepPage() {
       },
       "Kaynaklar güncellenemedi."
     );
+  };
 
-  const generate = (item: QueueItem) =>
-    run(
+  const generate = (item: QueueItem) => {
+    if (!systemActive) {
+      setMessage("Sistem duraklatılmıştır. Yeni taslak oluşturmak için önce 'Sistemi Aç' butonuna tıklayın.");
+      return;
+    }
+    return run(
       `generate-${item.id}`,
       async () => {
         const response = await fetch("/api/recep/generate", {
@@ -175,6 +225,7 @@ function RecepPage() {
       },
       "Taslak oluşturulamadı."
     );
+  };
 
   const publish = (item: QueueItem) => {
     if (!item.articleId) return;
@@ -264,6 +315,10 @@ function RecepPage() {
   };
 
   const generateCover = (item: QueueItem) => {
+    if (!systemActive) {
+      setMessage("Sistem duraklatılmıştır. AI kapak görseli üretmek için önce 'Sistemi Aç' butonuna tıklayın.");
+      return;
+    }
     if (!item.articleId) return;
     return run(
       `ai-cover-${item.articleId}`,
@@ -327,22 +382,89 @@ function RecepPage() {
 
   return (
     <main className="min-h-screen bg-surface text-ink">
-      <header className="border-b border-line bg-paper">
+      <header className="border-b border-line bg-paper sticky top-0 z-30 shadow-xs">
         <div className="container-buletin flex min-h-20 items-center justify-between gap-4">
           <div>
             <p className="text-xs font-bold tracking-[0.2em] text-buletin uppercase">Mansetle Yönetim</p>
             <h1 className="mt-1 font-serif text-2xl font-bold">Yayın masası</h1>
           </div>
-          <button
-            onClick={() => void logout()}
-            className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-muted hover:text-ink"
-          >
-            <LogOut className="size-4" /> Çıkış
-          </button>
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div
+              className={`hidden sm:inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                systemActive
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700"
+                  : "border-amber-500/40 bg-amber-500/10 text-amber-700"
+              }`}
+            >
+              <span
+                className={`size-2 rounded-full ${
+                  systemActive ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                }`}
+              />
+              {systemActive ? "Sistem: Aktif" : "Sistem: Duraklatıldı (0 Token)"}
+            </div>
+
+            {systemActive ? (
+              <button
+                type="button"
+                onClick={() => setShowPauseModal(true)}
+                disabled={togglingSystem}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100 transition disabled:opacity-50 sm:text-sm"
+                title="Sistemi duraklat ve yeni haber akışını kapat"
+              >
+                <Pause className="size-3.5 sm:size-4" />
+                <span>Sistemi Kapat</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void toggleSystem(true)}
+                disabled={togglingSystem}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition disabled:opacity-50 sm:text-sm"
+                title="Sistemi yeniden aktifleştir"
+              >
+                {togglingSystem ? <LoaderCircle className="size-3.5 sm:size-4 animate-spin" /> : <Play className="size-3.5 sm:size-4" />}
+                <span>Sistemi Aç</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => void logout()}
+              className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink pl-2 sm:pl-3 border-l border-line"
+            >
+              <LogOut className="size-4" /> Çıkış
+            </button>
+          </div>
         </div>
       </header>
 
       <section className="container-buletin py-5 sm:py-8 md:py-12">
+        {!systemActive && (
+          <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50/90 p-5 text-amber-950">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-xl bg-amber-200/70 p-2 text-amber-900">
+                  <Pause className="size-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-amber-950">Sistem Duraklatıldı (0 Token Güvenli Mod)</h3>
+                  <p className="mt-1 text-sm text-amber-900/90">
+                    Yeni haber çekme ve Gemini yapay zeka üretimi şu an kapalıdır. Arka planda <strong>kesinlikle 0 token</strong> harcanır. Sitedeki mevcut yayınlanmış haberler yayında kalmaya devam eder.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void toggleSystem(true)}
+                disabled={togglingSystem}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 shadow-sm transition"
+              >
+                <Play className="size-4" /> Sistemi Başlat
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col justify-between gap-5 rounded-2xl border border-line bg-paper p-4 sm:p-6 md:flex-row md:items-center">
           <div>
             <p className="text-xs font-bold tracking-[0.16em] text-buletin uppercase">Editoryal iş akışı</p>
@@ -352,9 +474,10 @@ function RecepPage() {
             </p>
           </div>
           <ActionButton
-            disabled={busy === "refresh"}
+            disabled={busy === "refresh" || !systemActive}
             onClick={() => void refreshSources()}
-            className="bg-ink text-surface"
+            className="bg-ink text-surface disabled:opacity-50"
+            title={!systemActive ? "Sistem duraklatıldığı için kaynak yenileme kapalıdır" : ""}
           >
             <RefreshCw className={`size-4 ${busy === "refresh" ? "animate-spin" : ""}`} /> Kaynakları yenile
           </ActionButton>
@@ -649,6 +772,52 @@ function RecepPage() {
           ) : null}
         </div>
       </section>
+
+      {showPauseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-line bg-paper p-6 shadow-2xl">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600">
+              <AlertTriangle className="size-6" />
+            </div>
+            <h3 className="mt-4 font-serif text-xl font-bold text-ink">
+              Sistemi Kapatmak İstiyor Musunuz?
+            </h3>
+            <div className="mt-3 space-y-2 text-sm text-muted">
+              <p className="text-ink/90 font-medium">
+                Sistemi kapattığınızda:
+              </p>
+              <ul className="list-inside list-disc space-y-1 text-ink/80 text-xs sm:text-sm pl-1">
+                <li>RSS kaynaklarından yeni haber çekilmez.</li>
+                <li>Gemini AI taslak ve kapak üretimi kilitlenir.</li>
+                <li><strong>Arka planda 0 token</strong> harcanır, API sorgusu atılmaz.</li>
+                <li>Mevcut yayınlanmış haberleriniz sitede görünmeye devam eder.</li>
+              </ul>
+              <p className="pt-2 text-xs text-muted">
+                Domain bağlayana veya istediğiniz güne kadar sistemi kapalı tutabilirsiniz. Tekrar açmak için dilediğiniz an "Sistemi Aç" butonuna basmanız yeterlidir.
+              </p>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowPauseModal(false)}
+                disabled={togglingSystem}
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold text-ink hover:bg-surface"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                onClick={() => void toggleSystem(false)}
+                disabled={togglingSystem}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-red-600 px-5 text-sm font-bold text-white hover:bg-red-700 shadow-sm"
+              >
+                {togglingSystem ? <LoaderCircle className="size-4 animate-spin" /> : <Pause className="size-4" />}
+                Evet, Sistemi Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

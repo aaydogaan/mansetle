@@ -32,6 +32,7 @@ import { Route as ApiRecepLogoutRouteImport } from './routes/api/recep/logout'
 import { Route as ApiRecepPublishRouteImport } from './routes/api/recep/publish'
 import { Route as ApiRecepQueueRouteImport } from './routes/api/recep/queue'
 import { Route as ApiRecepSessionRouteImport } from './routes/api/recep/session'
+import { Route as ApiRecepSettingsRouteImport } from './routes/api/recep/settings'
 import { Route as ApiSourceFeedSourceRouteImport } from './routes/api/source-feed.$source'
 
 const IndexRoute = IndexRouteImport.update({
@@ -149,6 +150,11 @@ const ApiRecepSessionRoute = ApiRecepSessionRouteImport.update({
   path: '/api/recep/session',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRecepSettingsRoute = ApiRecepSettingsRouteImport.update({
+  id: '/api/recep/settings',
+  path: '/api/recep/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSourceFeedSourceRoute = ApiSourceFeedSourceRouteImport.update({
   id: '/api/source-feed/$source',
   path: '/api/source-feed/$source',
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/api/recep/publish': typeof ApiRecepPublishRoute
   '/api/recep/queue': typeof ApiRecepQueueRoute
   '/api/recep/session': typeof ApiRecepSessionRoute
+  '/api/recep/settings': typeof ApiRecepSettingsRoute
   '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRoutesByTo {
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/api/recep/publish': typeof ApiRecepPublishRoute
   '/api/recep/queue': typeof ApiRecepQueueRoute
   '/api/recep/session': typeof ApiRecepSessionRoute
+  '/api/recep/settings': typeof ApiRecepSettingsRoute
   '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRoutesById {
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/api/recep/publish': typeof ApiRecepPublishRoute
   '/api/recep/queue': typeof ApiRecepQueueRoute
   '/api/recep/session': typeof ApiRecepSessionRoute
+  '/api/recep/settings': typeof ApiRecepSettingsRoute
   '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRouteTypes {
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/api/recep/publish'
     | '/api/recep/queue'
     | '/api/recep/session'
+    | '/api/recep/settings'
     | '/api/source-feed/$source'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/api/recep/publish'
     | '/api/recep/queue'
     | '/api/recep/session'
+    | '/api/recep/settings'
     | '/api/source-feed/$source'
   id:
     | '__root__'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/api/recep/publish'
     | '/api/recep/queue'
     | '/api/recep/session'
+    | '/api/recep/settings'
     | '/api/source-feed/$source'
   fileRoutesById: FileRoutesById
 }
@@ -338,6 +350,7 @@ export interface RootRouteChildren {
   ApiRecepPublishRoute: typeof ApiRecepPublishRoute
   ApiRecepQueueRoute: typeof ApiRecepQueueRoute
   ApiRecepSessionRoute: typeof ApiRecepSessionRoute
+  ApiRecepSettingsRoute: typeof ApiRecepSettingsRoute
   ApiSourceFeedSourceRoute: typeof ApiSourceFeedSourceRoute
 }
 
@@ -504,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRecepSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/recep/settings': {
+      id: '/api/recep/settings'
+      path: '/api/recep/settings'
+      fullPath: '/api/recep/settings'
+      preLoaderRoute: typeof ApiRecepSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/source-feed/$source': {
       id: '/api/source-feed/$source'
       path: '/api/source-feed/$source'
@@ -548,6 +568,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRecepPublishRoute: ApiRecepPublishRoute,
   ApiRecepQueueRoute: ApiRecepQueueRoute,
   ApiRecepSessionRoute: ApiRecepSessionRoute,
+  ApiRecepSettingsRoute: ApiRecepSettingsRoute,
   ApiSourceFeedSourceRoute: ApiSourceFeedSourceRoute,
 }
 export const routeTree = rootRouteImport
