@@ -4,6 +4,7 @@ import { creators, getArticle, homepage, sources, storyOrder } from "@/data/cont
 import { ArticleCard, CategoryRead, MetaRow } from "@/components/news/ArticleCard";
 import { SectionHeader } from "@/components/news/SectionHeader";
 import { SourceBadge } from "@/components/news/SourceBadge";
+import { SourceFeeds } from "./SourceFeeds";
 
 function must(slug: string) {
   const article = getArticle(slug);
@@ -56,6 +57,9 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      <SourceFeeds />
+
 
       <section className="container-buletin mt-16 md:mt-20">
         <SectionHeader title="Son Haberler" href="/kategori/$slug" params={{ slug: "gundem" }} />

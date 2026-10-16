@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
-const KEY = "buletin-saved";
-const SUB_KEY = "buletin-subscribed";
+const KEY = "mansetle-saved";
+const SUB_KEY = "mansetle-subscribed";
+const LEGACY_KEY = "buletin-saved";
+const LEGACY_SUB_KEY = "buletin-subscribed";
 
 function readIds(): string[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const current = localStorage.getItem(KEY);
+    const raw = current ?? localStorage.getItem(LEGACY_KEY);
+    if (!current && raw) localStorage.setItem(KEY, raw);
     return raw ? (JSON.parse(raw) as string[]) : [];
   } catch {
     return [];
@@ -37,8 +41,9 @@ export function useSubscribe() {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(SUB_KEY);
+    const stored = localStorage.getItem(SUB_KEY) ?? localStorage.getItem(LEGACY_SUB_KEY);
     if (stored) {
+      localStorage.setItem(SUB_KEY, stored);
       setEmail(stored);
       setDone(true);
     }

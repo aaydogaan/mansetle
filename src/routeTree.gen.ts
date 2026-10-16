@@ -19,6 +19,7 @@ import { Route as HaberSlugRouteImport } from './routes/haber.$slug'
 import { Route as KategoriSlugRouteImport } from './routes/kategori.$slug'
 import { Route as YazarSlugRouteImport } from './routes/yazar.$slug'
 import { Route as YazarlarIndexRouteImport } from './routes/yazarlar.index'
+import { Route as ApiSourceFeedSourceRouteImport } from './routes/api/source-feed.$source'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,11 @@ const YazarlarIndexRoute = YazarlarIndexRouteImport.update({
   path: '/yazarlar/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSourceFeedSourceRoute = ApiSourceFeedSourceRouteImport.update({
+  id: '/api/source-feed/$source',
+  path: '/api/source-feed/$source',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/kategori/$slug': typeof KategoriSlugRoute
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar/': typeof YazarlarIndexRoute
+  '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/kategori/$slug': typeof KategoriSlugRoute
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar': typeof YazarlarIndexRoute
+  '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/kategori/$slug': typeof KategoriSlugRoute
   '/yazar/$slug': typeof YazarSlugRoute
   '/yazarlar/': typeof YazarlarIndexRoute
+  '/api/source-feed/$source': typeof ApiSourceFeedSourceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/kategori/$slug'
     | '/yazar/$slug'
     | '/yazarlar/'
+    | '/api/source-feed/$source'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/kategori/$slug'
     | '/yazar/$slug'
     | '/yazarlar'
+    | '/api/source-feed/$source'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/kategori/$slug'
     | '/yazar/$slug'
     | '/yazarlar/'
+    | '/api/source-feed/$source'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   KategoriSlugRoute: typeof KategoriSlugRoute
   YazarSlugRoute: typeof YazarSlugRoute
   YazarlarIndexRoute: typeof YazarlarIndexRoute
+  ApiSourceFeedSourceRoute: typeof ApiSourceFeedSourceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof YazarlarIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/source-feed/$source': {
+      id: '/api/source-feed/$source'
+      path: '/api/source-feed/$source'
+      fullPath: '/api/source-feed/$source'
+      preLoaderRoute: typeof ApiSourceFeedSourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   KategoriSlugRoute: KategoriSlugRoute,
   YazarSlugRoute: YazarSlugRoute,
   YazarlarIndexRoute: YazarlarIndexRoute,
+  ApiSourceFeedSourceRoute: ApiSourceFeedSourceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

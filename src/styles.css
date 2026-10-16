@@ -36,8 +36,8 @@ html.dark {
   --color-line: var(--color-line);
   --color-surface: var(--color-surface);
   --color-soft: var(--color-soft);
-  --font-serif: "Noto Serif", Georgia, "Times New Roman", serif;
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
   --radius-card: 0.75rem;
   --radius-banner: 1.5rem;
   --radius-pill: 999px;
@@ -62,6 +62,16 @@ html.dark {
     background-color: var(--color-surface);
     color: var(--color-ink);
     min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 
   a {
