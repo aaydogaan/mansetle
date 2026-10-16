@@ -17,7 +17,7 @@ export const Route = createFileRoute("/haber/$slug")({
 });
 
 function articleSchema(article: LiveArticle) {
-  return JSON.stringify({ "@context": "https://schema.org", "@type": "NewsArticle", headline: article.title, description: trimDescription(article.summary), datePublished: article.publishedAt, dateModified: article.publishedAt, mainEntityOfPage: absoluteUrl(`/haber/${article.slug}`), url: absoluteUrl(`/haber/${article.slug}`), publisher: { "@type": "Organization", name: site.name, url: site.url, logo: { "@type": "ImageObject", url: absoluteUrl("/mansetle-fav.svg") } }, isBasedOn: article.sourceUrl }).replace(/</g, "\\u003c");
+  return JSON.stringify({ "@context": "https://schema.org", "@type": "NewsArticle", headline: article.title, description: trimDescription(article.summary), datePublished: article.publishedAt, dateModified: article.publishedAt, mainEntityOfPage: absoluteUrl(`/haber/${article.slug}`), url: absoluteUrl(`/haber/${article.slug}`), publisher: { "@type": "Organization", name: site.name, url: site.url, logo: { "@type": "ImageObject", url: absoluteUrl("/mansetle-fav.png") } }, isBasedOn: article.sourceUrl }).replace(/</g, "\\u003c");
 }
 
 function ArticlePage() {
