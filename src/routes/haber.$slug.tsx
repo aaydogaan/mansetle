@@ -1,11 +1,19 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Check, Clock, Copy, ExternalLink, Share2 } from "lucide-react";
+import { Check, ChevronRight, Clock, Copy, ExternalLink } from "lucide-react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { getPublishedArticle, getPublishedArticles } from "@/lib/news.functions";
 import type { LiveArticle } from "@/lib/news";
 import { absoluteUrl, categoryNames, pageTitle, seoHead, site, trimDescription } from "@/lib/site";
 import { estimateReadTime, formatFullDateTime, formatRelativeTime } from "@/lib/utils";
+
+const TOP_SIDEBAR_CATEGORIES = [
+  { slug: "gundem", name: "Gündem", color: "bg-red-500" },
+  { slug: "para", name: "Ekonomi", color: "bg-emerald-500" },
+  { slug: "spor", name: "Spor", color: "bg-blue-500" },
+  { slug: "teknoloji", name: "Teknoloji", color: "bg-cyan-500" },
+  { slug: "dunya", name: "Dünya", color: "bg-purple-500" },
+];
 
 export const Route = createFileRoute("/haber/$slug")({
   loader: async ({ params }) => {
@@ -168,28 +176,17 @@ function ArticlePage() {
               ))}
             </div>
 
-            {/* Alt Kaynak & Paylaşım Çubuğu */}
-            <div className="mt-12 flex flex-col justify-between gap-4 rounded-xl border border-line bg-surface p-5 sm:flex-row sm:items-center">
-              <div>
-                <p className="text-xs font-bold text-muted uppercase">Haber Kaynağı</p>
-                <p className="mt-0.5 text-sm font-semibold text-ink">{article.sourceName}</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={copyUrl}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-paper px-3.5 py-2 text-xs font-bold text-ink hover:border-buletin"
-                >
-                  <Share2 className="size-3.5" /> {copied ? "Kopyalandı!" : "Haberi Paylaş"}
-                </button>
-                <a
-                  href={article.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-4 py-2 text-xs font-bold text-surface hover:opacity-90"
-                >
-                  Orijinal Kaynağa Git <ExternalLink className="size-3.5" />
-                </a>
-              </div>
+            {/* Alt Kısım: Sadece Kaynak */}
+            <div className="mt-10 border-t border-line/60 pt-5">
+              <a
+                href={article.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-buletin transition"
+              >
+                <span>Kaynak: {article.sourceName}</span>
+                <ExternalLink className="size-3.5" />
+              </a>
             </div>
           </div>
 
@@ -241,42 +238,26 @@ function ArticlePage() {
               </div>
             </div>
 
-            {/* Kategoriler Widget */}
+            {/* Kategoriler Widget - Şık ve Alt Alta 5 Kategori */}
             <div className="rounded-2xl border border-line bg-paper p-5 shadow-xs">
               <h3 className="border-b border-line pb-3 font-serif text-lg font-bold text-ink">
                 Kategoriler
               </h3>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {Object.entries(categoryNames).map(([slug, name]) => (
+              <div className="mt-3 divide-y divide-line/60">
+                {TOP_SIDEBAR_CATEGORIES.map(({ slug, name, color }) => (
                   <Link
                     key={slug}
                     to="/kategori/$slug"
                     params={{ slug }}
-                    className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-buletin hover:text-buletin"
+                    className="group flex items-center justify-between py-3 text-sm font-semibold text-ink transition hover:text-buletin"
                   >
-                    <span>{name}</span>
-                    <ArrowUpRight className="size-3 text-muted" />
+                    <div className="flex items-center gap-2.5">
+                      <span className={`size-2 rounded-full ${color}`} />
+                      <span>{name}</span>
+                    </div>
+                    <ChevronRight className="size-4 text-muted transition-transform group-hover:translate-x-1 group-hover:text-buletin" />
                   </Link>
                 ))}
-              </div>
-            </div>
-
-            {/* E-Bülten Kartı */}
-            <div className="rounded-2xl bg-gradient-to-br from-buletin to-ink p-5 text-white shadow-sm">
-              <p className="text-[11px] font-bold tracking-widest uppercase text-white/80">Günlük Özet</p>
-              <h4 className="mt-1 font-serif text-xl font-bold">Mansetle E-Bülten</h4>
-              <p className="mt-2 text-xs leading-relaxed text-white/85">
-                Günün öne çıkan manşetlerini ve özgün analizlerini kaçırma.
-              </p>
-              <div className="mt-4 flex flex-col gap-2">
-                <input
-                  type="email"
-                  placeholder="E-posta adresiniz"
-                  className="h-10 w-full rounded-lg bg-white/15 px-3 text-xs text-white placeholder-white/60 outline-none focus:ring-2 focus:ring-white/40"
-                />
-                <button className="h-10 w-full rounded-lg bg-white text-xs font-bold text-ink transition hover:bg-white/90">
-                  Ücretsiz Abone Ol
-                </button>
               </div>
             </div>
           </aside>

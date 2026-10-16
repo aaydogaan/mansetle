@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronRight, Clock, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronRight, Sparkles } from "lucide-react";
 import type { LiveArticle } from "@/lib/news";
 import { categoryNames } from "@/lib/site";
 import { estimateReadTime, formatRelativeTime } from "@/lib/utils";
@@ -23,53 +23,6 @@ function ArticleImage({ article, className }: { article: LiveArticle; className:
       loading="eager"
       referrerPolicy="no-referrer"
     />
-  );
-}
-
-// Hikaye / Kaynak Çemberleri
-const STORY_ITEMS = [
-  { id: "aa", name: "Anadolu Ajansı", short: "AA", slug: "gundem", color: "from-blue-600 to-indigo-600" },
-  { id: "trt", name: "TRT Haber", short: "TRT", slug: "gundem", color: "from-red-600 to-rose-700" },
-  { id: "gundem", name: "Gündem", short: "GÜN", slug: "gundem", color: "from-amber-500 to-red-500" },
-  { id: "ekonomi", name: "Ekonomi", short: "EKO", slug: "para", color: "from-emerald-600 to-teal-700" },
-  { id: "spor", name: "Spor", short: "SPR", slug: "spor", color: "from-emerald-500 to-blue-600" },
-  { id: "teknoloji", name: "Teknoloji", short: "TEK", slug: "teknoloji", color: "from-cyan-500 to-blue-700" },
-  { id: "dunya", name: "Dünya", short: "DNY", slug: "dunya", color: "from-violet-600 to-purple-800" },
-  { id: "kultur", name: "Kültür & Sanat", short: "KLT", slug: "kultur", color: "from-rose-500 to-pink-600" },
-  { id: "yasam", name: "Yaşam", short: "YSM", slug: "yasam", color: "from-orange-500 to-amber-600" },
-];
-
-function StoryBar() {
-  return (
-    <section className="container-buletin mt-10 md:mt-12">
-      <div className="flex items-center justify-between border-b border-line pb-4">
-        <h2 className="font-serif text-xl font-bold text-ink">Mansetle Hikayeler & Kaynaklar</h2>
-        <span className="text-xs font-semibold text-muted">Akış</span>
-      </div>
-      <div className="mt-5 flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-none sm:gap-6">
-        {STORY_ITEMS.map((story) => (
-          <Link
-            key={story.id}
-            to="/kategori/$slug"
-            params={{ slug: story.slug }}
-            className="group flex flex-col items-center shrink-0"
-          >
-            <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-buletin via-pink-500 to-amber-500 transition-transform group-hover:scale-105">
-              <div className="size-16 sm:size-18 rounded-full border-2 border-surface bg-paper p-1 flex items-center justify-center overflow-hidden">
-                <div
-                  className={`size-full rounded-full bg-gradient-to-br ${story.color} flex items-center justify-center text-white font-bold text-xs tracking-wider shadow-inner`}
-                >
-                  {story.short}
-                </div>
-              </div>
-            </div>
-            <span className="mt-2 text-center text-xs font-semibold text-ink group-hover:text-buletin max-w-[76px] truncate">
-              {story.name}
-            </span>
-          </Link>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -205,7 +158,7 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
         </section>
       ) : (
         <>
-          {/* 2. Günün Manşeti (Hero Story) - Screenshot'taki John Wick Mizanpajı */}
+          {/* 2. Günün Manşeti (Hero Story) */}
           <section className="container-buletin mt-8 md:mt-12">
             <Link
               to="/haber/$slug"
@@ -272,10 +225,7 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
             </section>
           ) : null}
 
-          {/* 4. Mansetle Hikayeler & Kaynak Çemberleri */}
-          <StoryBar />
-
-          {/* 5. Öne Çıkanlar (Must Read - 3 Kolonlu Asimetrik Bölüm) */}
+          {/* 4. Öne Çıkanlar (Must Read - 3 Kolonlu Asimetrik Bölüm) */}
           {mustReadHero ? (
             <section className="container-buletin mt-14 md:mt-20">
               <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
@@ -331,7 +281,7 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
                   </div>
                 ) : null}
 
-                {/* 2. Sütun (Merkez Manşet): BÜYÜK Dikey Overlay Kart (Taylor Swift Tarzı) */}
+                {/* 2. Sütun (Merkez Manşet): BÜYÜK Dikey Overlay Kart */}
                 <div className="lg:col-span-5">
                   <Link
                     to="/haber/$slug"
@@ -378,7 +328,7 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
             </section>
           ) : null}
 
-          {/* 6. Editörün Seçimi (Editor's Pick - Panoramik Kart + 4'lü Izgara) */}
+          {/* 5. Editörün Seçimi (Editor's Pick - Panoramik Kart + 4'lü Izgara) */}
           {editorsPick ? (
             <section className="container-buletin mt-14 md:mt-20">
               <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
@@ -400,7 +350,7 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
                 </Link>
               </div>
 
-              {/* Geniş Panoramik Kart (iPhone 15 Tarzı) */}
+              {/* Geniş Panoramik Kart */}
               <Link
                 to="/haber/$slug"
                 params={{ slug: editorsPick.slug }}
@@ -447,7 +397,7 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
             </section>
           ) : null}
 
-          {/* 7. Kategori İkilisi (Gündem & Ekonomi vs Spor & Teknoloji) */}
+          {/* 6. Kategori İkilisi (Gündem & Ekonomi vs Spor & Teknoloji) */}
           {catLeft.length > 0 || catRight.length > 0 ? (
             <section className="container-buletin mt-14 md:mt-20">
               <div className="grid gap-10 md:grid-cols-2">
@@ -492,7 +442,7 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
             </section>
           ) : null}
 
-          {/* 8. Daha Fazla Haber (Varsa) */}
+          {/* 7. Daha Fazla Haber (Varsa) */}
           {moreNews.length > 0 ? (
             <section className="container-buletin mt-14 md:mt-20">
               <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
@@ -508,41 +458,6 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
               </div>
             </section>
           ) : null}
-
-          {/* 9. E-Bülten Kayıt Kartı */}
-          <section className="container-buletin mt-16 md:mt-24">
-            <div className="rounded-3xl border border-line bg-paper p-8 text-center sm:p-12 md:p-16 shadow-xs">
-              <p className="text-xs font-bold tracking-widest text-buletin uppercase">
-                GELİŞMELERİ KAÇIRMAYIN
-              </p>
-              <h2 className="mx-auto mt-2 max-w-xl font-serif text-2xl font-bold text-ink sm:text-3xl md:text-4xl">
-                Günün manşetleri her sabah e-postanıza gelsin.
-              </h2>
-              <p className="mx-auto mt-3 max-w-md text-sm text-muted">
-                Reklamsız, sade ve tarafsız günlük haber bültenimize ücretsiz abone olun.
-              </p>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  alert("Bülten aboneliğiniz alındı!");
-                }}
-                className="mx-auto mt-6 flex max-w-md flex-col gap-2 sm:flex-row"
-              >
-                <input
-                  type="email"
-                  required
-                  placeholder="E-posta adresiniz"
-                  className="h-12 flex-1 rounded-xl border border-line bg-surface px-4 text-sm outline-none focus:border-buletin"
-                />
-                <button
-                  type="submit"
-                  className="h-12 rounded-xl bg-buletin px-6 text-sm font-bold text-white transition hover:opacity-90"
-                >
-                  Abone Ol
-                </button>
-              </form>
-            </div>
-          </section>
         </>
       )}
     </div>

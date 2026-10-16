@@ -15,7 +15,7 @@ export function Header() {
       <div className="container-buletin flex h-[76px] items-center justify-between gap-4 lg:gap-8">
         {/* Sol Alan: Logo */}
         <div className="flex shrink-0 items-center">
-          <Link to="/" className="flex items-center transition-opacity hover:opacity-90">
+          <Link to="/" preload="intent" className="flex items-center transition-opacity hover:opacity-90">
             <img
               src="/logos/mansetle-logo.webp"
               alt="Mansetle"

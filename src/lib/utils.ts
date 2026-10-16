@@ -79,6 +79,37 @@ export function estimateReadTime(text: string | null | undefined): string {
   return `${minutes} dk okuma`;
 }
 
+export function turkishSlugify(text: string): string {
+  if (!text) return "";
+  const charMap: Record<string, string> = {
+    ç: "c", Ç: "c",
+    ğ: "g", Ğ: "g",
+    ı: "i", I: "i", İ: "i",
+    ö: "o", Ö: "o",
+    ş: "s", Ş: "s",
+    ü: "u", Ü: "u",
+    â: "a", Â: "a",
+    î: "i", Î: "i",
+    û: "u", Û: "u",
+  };
+
+  let str = text;
+  for (const [key, val] of Object.entries(charMap)) {
+    str = str.replaceAll(key, val);
+  }
+
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 85);
+}
+
 export function formatReadTime(readTime: string): string {
   if (!readTime) return "";
   let res = readTime.trim();
