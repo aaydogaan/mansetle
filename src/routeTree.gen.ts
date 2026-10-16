@@ -15,6 +15,7 @@ import { Route as HikayelerRouteImport } from './routes/hikayeler'
 import { Route as KaydedilenlerRouteImport } from './routes/kaydedilenler'
 import { Route as ToplulukRouteImport } from './routes/topluluk'
 import { Route as YazRouteImport } from './routes/yaz'
+import { Route as ApiDatabaseStatusRouteImport } from './routes/api/database-status'
 import { Route as HaberSlugRouteImport } from './routes/haber.$slug'
 import { Route as KategoriSlugRouteImport } from './routes/kategori.$slug'
 import { Route as YazarSlugRouteImport } from './routes/yazar.$slug'
@@ -51,6 +52,11 @@ const YazRoute = YazRouteImport.update({
   path: '/yaz',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDatabaseStatusRoute = ApiDatabaseStatusRouteImport.update({
+  id: '/api/database-status',
+  path: '/api/database-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HaberSlugRoute = HaberSlugRouteImport.update({
   id: '/haber/$slug',
   path: '/haber/$slug',
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/kaydedilenler': typeof KaydedilenlerRoute
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
+  '/api/database-status': typeof ApiDatabaseStatusRoute
   '/haber/$slug': typeof HaberSlugRoute
   '/kategori/$slug': typeof KategoriSlugRoute
   '/yazar/$slug': typeof YazarSlugRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/kaydedilenler': typeof KaydedilenlerRoute
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
+  '/api/database-status': typeof ApiDatabaseStatusRoute
   '/haber/$slug': typeof HaberSlugRoute
   '/kategori/$slug': typeof KategoriSlugRoute
   '/yazar/$slug': typeof YazarSlugRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/kaydedilenler': typeof KaydedilenlerRoute
   '/topluluk': typeof ToplulukRoute
   '/yaz': typeof YazRoute
+  '/api/database-status': typeof ApiDatabaseStatusRoute
   '/haber/$slug': typeof HaberSlugRoute
   '/kategori/$slug': typeof KategoriSlugRoute
   '/yazar/$slug': typeof YazarSlugRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/kaydedilenler'
     | '/topluluk'
     | '/yaz'
+    | '/api/database-status'
     | '/haber/$slug'
     | '/kategori/$slug'
     | '/yazar/$slug'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/kaydedilenler'
     | '/topluluk'
     | '/yaz'
+    | '/api/database-status'
     | '/haber/$slug'
     | '/kategori/$slug'
     | '/yazar/$slug'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/kaydedilenler'
     | '/topluluk'
     | '/yaz'
+    | '/api/database-status'
     | '/haber/$slug'
     | '/kategori/$slug'
     | '/yazar/$slug'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   KaydedilenlerRoute: typeof KaydedilenlerRoute
   ToplulukRoute: typeof ToplulukRoute
   YazRoute: typeof YazRoute
+  ApiDatabaseStatusRoute: typeof ApiDatabaseStatusRoute
   HaberSlugRoute: typeof HaberSlugRoute
   KategoriSlugRoute: typeof KategoriSlugRoute
   YazarSlugRoute: typeof YazarSlugRoute
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof YazRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/database-status': {
+      id: '/api/database-status'
+      path: '/api/database-status'
+      fullPath: '/api/database-status'
+      preLoaderRoute: typeof ApiDatabaseStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/haber/$slug': {
       id: '/haber/$slug'
       path: '/haber/$slug'
@@ -262,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   KaydedilenlerRoute: KaydedilenlerRoute,
   ToplulukRoute: ToplulukRoute,
   YazRoute: YazRoute,
+  ApiDatabaseStatusRoute: ApiDatabaseStatusRoute,
   HaberSlugRoute: HaberSlugRoute,
   KategoriSlugRoute: KategoriSlugRoute,
   YazarSlugRoute: YazarSlugRoute,
