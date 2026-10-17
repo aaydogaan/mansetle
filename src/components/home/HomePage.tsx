@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 import type { LiveArticle } from "@/lib/news";
 import { categoryNames } from "@/lib/site";
 import { estimateReadTime, formatRelativeTime } from "@/lib/utils";
@@ -26,14 +26,14 @@ function ArticleImage({ article, className }: { article: LiveArticle; className:
   );
 }
 
-// 4'lü Standart Kart
+// 4'lü Standart Kart (Alttaki bölümler için)
 function GridCard({ article }: { article: LiveArticle }) {
   return (
-    <Link to="/haber/$slug" params={{ slug: article.slug }} className="group block">
+    <Link to="/haber/$slug" params={{ slug: article.slug }} className="block">
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-line bg-soft">
         <ArticleImage
           article={article}
-          className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="size-full object-cover"
         />
       </div>
       <div className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
@@ -41,7 +41,7 @@ function GridCard({ article }: { article: LiveArticle }) {
         <span>•</span>
         <span>{formatRelativeTime(article.publishedAt)}</span>
       </div>
-      <h3 className="mt-1.5 font-serif text-[18px] leading-snug font-bold text-ink group-hover:text-buletin line-clamp-2">
+      <h3 className="mt-1.5 font-serif text-[18px] leading-snug font-bold text-ink line-clamp-2">
         {article.title}
       </h3>
       <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted">{article.summary}</p>
@@ -54,38 +54,7 @@ function GridCard({ article }: { article: LiveArticle }) {
   );
 }
 
-// Sağ Sütun Kartı (Görseli üstte, Qatar/Wrexham stili)
-function SideImageCard({ article }: { article: LiveArticle }) {
-  return (
-    <Link
-      to="/haber/$slug"
-      params={{ slug: article.slug }}
-      className="group flex flex-col rounded-2xl border border-line bg-paper p-3.5 transition hover:border-buletin/40 shadow-2xs"
-    >
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-line bg-soft">
-        <ArticleImage
-          article={article}
-          className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-      </div>
-      <div className="mt-2.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
-        <span className="text-buletin font-bold">{categoryNames[article.category] ?? article.category}</span>
-        <span>•</span>
-        <span>{formatRelativeTime(article.publishedAt)}</span>
-      </div>
-      <h4 className="mt-1 line-clamp-2 font-serif text-sm sm:text-[15px] font-bold text-ink group-hover:text-buletin leading-snug">
-        {article.title}
-      </h4>
-      <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-muted">
-        <span className="text-buletin">{categoryNames[article.category] ?? article.category}</span>
-        <span>•</span>
-        <span>{estimateReadTime(article.bodyMarkdown)}</span>
-      </div>
-    </Link>
-  );
-}
-
-// 3-4 Saniyede Bir Dönen Merkez Manşet Kartı (Taylor Swift stili)
+// 3-4 Saniyede Bir Dönen Merkez Manşet Kartı (Taylor Swift stili - Hover animasyonsuz, net tasarım)
 function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -112,63 +81,43 @@ function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
       <Link
         to="/haber/$slug"
         params={{ slug: current.slug }}
-        className="group relative flex h-[460px] sm:h-[500px] w-full flex-col justify-end overflow-hidden rounded-3xl border border-line bg-ink p-6 sm:p-7 transition shadow-md hover:border-buletin/60"
+        className="relative flex h-[520px] w-full flex-col justify-end overflow-hidden rounded-3xl bg-ink p-7 text-white"
       >
         <div className="absolute inset-0">
           <ArticleImage
             article={current}
-            className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="size-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/15" />
         </div>
 
         <div className="relative z-10 text-white">
-          <div className="flex items-center gap-2 text-xs font-semibold text-white/85">
-            <span className="rounded bg-buletin px-2.5 py-0.5 text-[11px] font-bold text-white uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
+            <span className="size-2 rounded-full bg-buletin inline-block shrink-0" />
+            <span className="font-bold text-white uppercase tracking-wider">
               {categoryNames[current.category] ?? current.category}
             </span>
             <span>•</span>
             <span>{formatRelativeTime(current.publishedAt)}</span>
           </div>
 
-          <h3 className="mt-3 font-serif text-[22px] sm:text-[26px] leading-snug font-bold text-white group-hover:text-buletin/90 line-clamp-3">
+          <h3 className="mt-3 font-serif text-[24px] sm:text-[27px] leading-snug font-bold text-white line-clamp-3">
             {current.title}
           </h3>
 
-          <p className="mt-2 line-clamp-2 text-xs sm:text-sm leading-relaxed text-white/80">
+          <p className="mt-2.5 text-xs sm:text-sm text-white/80 leading-relaxed line-clamp-3">
             {current.summary}
           </p>
 
-          <div className="mt-4 flex items-center justify-between pt-2 border-t border-white/20 text-xs font-semibold text-white/75">
-            <div className="flex items-center gap-2">
-              <span className="text-buletin/90 font-bold">
-                {categoryNames[current.category] ?? current.category}
-              </span>
-              <span>•</span>
-              <span>{estimateReadTime(current.bodyMarkdown)}</span>
-            </div>
-            <span className="inline-flex items-center gap-1 font-bold text-white group-hover:text-buletin transition">
-              Oku →
+          <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-white/70">
+            <span className="text-buletin font-bold">
+              {categoryNames[current.category] ?? current.category}
             </span>
+            <span>•</span>
+            <span>{estimateReadTime(current.bodyMarkdown)}</span>
           </div>
         </div>
       </Link>
-
-      {/* Dönen Haber İndikatör Çizgileri */}
-      {count > 1 ? (
-        <div className="absolute bottom-2.5 right-6 z-20 flex items-center gap-1.5">
-          {articles.map((item, idx) => (
-            <button
-              key={item.slug}
-              onClick={() => setIndex(idx)}
-              aria-label={`Slayt ${idx + 1}`}
-              className={`h-1.5 rounded-full transition-all ${
-                idx === index ? "w-6 bg-buletin" : "w-2 bg-white/40 hover:bg-white/70"
-              }`}
-            />
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -245,53 +194,52 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
         </section>
       ) : (
         <>
-          {/* 1. Sitenin En Üstü: Must Read / Öne Çıkanlar Karuseli (Ekran Görüntüsü Tasarımı) */}
+          {/* 1. Sitenin En Üstü: Must Read / Öne Çıkanlar Karuseli (Ekran Görüntüsü ile Birebir) */}
           <section className="container-buletin pt-6 md:pt-8">
-            <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
-              <h2 className="font-serif text-[26px] font-bold text-ink sm:text-[32px]">
+            <div className="mb-7 flex items-center justify-between">
+              <h2 className="font-serif text-[28px] font-bold text-ink sm:text-[34px]">
                 Öne Çıkanlar
               </h2>
               <Link
                 to="/kategori/$slug"
                 params={{ slug: "son-haberler" }}
-                className="inline-flex items-center gap-1 text-sm font-bold text-buletin hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-buletin hover:underline"
               >
-                Tümünü gör <ArrowRight className="size-4" />
+                <span>Tümünü gör</span>
+                <ArrowRight className="size-4" />
               </Link>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-12 items-stretch">
-              {/* Sol Sütun: Dikey Görsel & Başlık Kartı (Ukrayna Tankı Stili) */}
+            <div className="grid gap-8 lg:grid-cols-12 items-start">
+              {/* Sol Sütun: Dikey Görsel & Başlık (Kutusuz, Çerçevesiz, Doğrudan Zemin Üzerinde) */}
               {leftStory ? (
-                <div className="lg:col-span-4 flex">
+                <div className="lg:col-span-4">
                   <Link
                     to="/haber/$slug"
                     params={{ slug: leftStory.slug }}
-                    className="group flex flex-col justify-between rounded-3xl border border-line bg-paper p-4 sm:p-5 transition hover:border-buletin/40 shadow-xs w-full"
+                    className="block w-full"
                   >
-                    <div>
-                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-line bg-soft">
-                        <ArticleImage
-                          article={leftStory}
-                          className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      </div>
-                      <div className="mt-3.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
-                        <span className="text-buletin font-bold">
-                          {categoryNames[leftStory.category] ?? leftStory.category}
-                        </span>
-                        <span>•</span>
-                        <span>{formatRelativeTime(leftStory.publishedAt)}</span>
-                      </div>
-                      <h3 className="mt-2 font-serif text-[20px] font-bold text-ink group-hover:text-buletin leading-snug line-clamp-3">
-                        {leftStory.title}
-                      </h3>
-                      <p className="mt-2.5 line-clamp-3 text-xs leading-relaxed text-muted">
-                        {leftStory.summary}
-                      </p>
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-soft">
+                      <ArticleImage
+                        article={leftStory}
+                        className="size-full object-cover"
+                      />
                     </div>
-
-                    <div className="mt-4 flex items-center gap-2 border-t border-line/60 pt-3 text-[11px] font-semibold text-muted">
+                    <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-muted">
+                      <span className="size-2 rounded-full bg-buletin inline-block shrink-0" />
+                      <span className="text-ink font-bold">
+                        {categoryNames[leftStory.category] ?? leftStory.category}
+                      </span>
+                      <span>•</span>
+                      <span>{formatRelativeTime(leftStory.publishedAt)}</span>
+                    </div>
+                    <h3 className="mt-2.5 font-serif text-[21px] sm:text-[23px] font-bold text-ink leading-snug line-clamp-3">
+                      {leftStory.title}
+                    </h3>
+                    <p className="mt-2.5 text-xs sm:text-sm text-muted leading-relaxed line-clamp-3">
+                      {leftStory.summary}
+                    </p>
+                    <div className="mt-3.5 flex items-center gap-2 text-xs font-semibold text-muted">
                       <span className="text-buletin font-bold">
                         {categoryNames[leftStory.category] ?? leftStory.category}
                       </span>
@@ -303,14 +251,77 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
               ) : null}
 
               {/* Merkez Sütun: 3-4 Saniyede Bir Dönen Büyük Kart (Taylor Swift Stili) */}
-              <div className="lg:col-span-4 flex">
+              <div className="lg:col-span-4">
                 <CenterRotatingCard articles={centerRotatingStories} />
               </div>
 
-              {/* Sağ Sütun: 2 Adet Görseli Üstte Kart (Qatar / Wrexham Stili) */}
-              <div className="space-y-4 lg:col-span-4 flex flex-col justify-between">
-                {rightStory1 ? <SideImageCard article={rightStory1} /> : null}
-                {rightStory2 ? <SideImageCard article={rightStory2} /> : null}
+              {/* Sağ Sütun: 2 Adet Görseli Üstte Haber (Kutusuz, Çerçevesiz, Doğrudan Zemin Üzerinde) */}
+              <div className="space-y-7 lg:col-span-4">
+                {rightStory1 ? (
+                  <Link
+                    to="/haber/$slug"
+                    params={{ slug: rightStory1.slug }}
+                    className="block w-full"
+                  >
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-soft">
+                      <ArticleImage
+                        article={rightStory1}
+                        className="size-full object-cover"
+                      />
+                    </div>
+                    <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">
+                      <span className="size-2 rounded-full bg-buletin inline-block shrink-0" />
+                      <span className="text-ink font-bold">
+                        {categoryNames[rightStory1.category] ?? rightStory1.category}
+                      </span>
+                      <span>•</span>
+                      <span>{formatRelativeTime(rightStory1.publishedAt)}</span>
+                    </div>
+                    <h4 className="mt-1.5 font-serif text-[17px] sm:text-[18px] font-bold text-ink leading-snug line-clamp-2">
+                      {rightStory1.title}
+                    </h4>
+                    <div className="mt-2 text-xs font-semibold text-muted">
+                      <span className="text-buletin font-bold">
+                        {categoryNames[rightStory1.category] ?? rightStory1.category}
+                      </span>
+                      <span>•</span>
+                      <span>{estimateReadTime(rightStory1.bodyMarkdown)}</span>
+                    </div>
+                  </Link>
+                ) : null}
+
+                {rightStory2 ? (
+                  <Link
+                    to="/haber/$slug"
+                    params={{ slug: rightStory2.slug }}
+                    className="block w-full"
+                  >
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-soft">
+                      <ArticleImage
+                        article={rightStory2}
+                        className="size-full object-cover"
+                      />
+                    </div>
+                    <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">
+                      <span className="size-2 rounded-full bg-buletin inline-block shrink-0" />
+                      <span className="text-ink font-bold">
+                        {categoryNames[rightStory2.category] ?? rightStory2.category}
+                      </span>
+                      <span>•</span>
+                      <span>{formatRelativeTime(rightStory2.publishedAt)}</span>
+                    </div>
+                    <h4 className="mt-1.5 font-serif text-[17px] sm:text-[18px] font-bold text-ink leading-snug line-clamp-2">
+                      {rightStory2.title}
+                    </h4>
+                    <div className="mt-2 text-xs font-semibold text-muted">
+                      <span className="text-buletin font-bold">
+                        {categoryNames[rightStory2.category] ?? rightStory2.category}
+                      </span>
+                      <span>•</span>
+                      <span>{estimateReadTime(rightStory2.bodyMarkdown)}</span>
+                    </div>
+                  </Link>
+                ) : null}
               </div>
             </div>
           </section>
@@ -362,12 +373,12 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
               <Link
                 to="/haber/$slug"
                 params={{ slug: editorsPick.slug }}
-                className="group relative block aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden rounded-3xl border border-line bg-ink shadow-sm hover:border-buletin/50"
+                className="relative block aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden rounded-3xl border border-line bg-ink shadow-sm"
               >
                 <div className="absolute inset-0">
                   <ArticleImage
                     article={editorsPick}
-                    className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="size-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/10" />
                 </div>
@@ -380,7 +391,7 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
                     <span>•</span>
                     <span>{formatRelativeTime(editorsPick.publishedAt)}</span>
                   </div>
-                  <h3 className="mt-3 max-w-3xl font-serif text-[22px] leading-tight font-bold text-white group-hover:text-buletin/90 sm:text-[30px] md:text-[36px]">
+                  <h3 className="mt-3 max-w-3xl font-serif text-[22px] leading-tight font-bold text-white sm:text-[30px] md:text-[36px]">
                     {editorsPick.title}
                   </h3>
                   <p className="mt-2.5 max-w-2xl line-clamp-2 text-xs sm:text-sm leading-relaxed text-white/85">
