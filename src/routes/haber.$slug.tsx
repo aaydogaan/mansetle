@@ -316,9 +316,7 @@ function ArticlePage() {
                   <h4 className="mt-1 line-clamp-2 font-serif text-[15px] font-bold text-ink group-hover:text-buletin leading-snug">
                     {item.title}
                   </h4>
-                  <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-muted">
-                    <span className="text-buletin">{categoryNames[item.category] ?? item.category}</span>
-                    <span>•</span>
+                  <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-muted">
                     <span>{estimateReadTime(item.bodyMarkdown)}</span>
                   </div>
                 </Link>

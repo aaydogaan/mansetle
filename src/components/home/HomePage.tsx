@@ -63,9 +63,7 @@ function GridCard({ article }: { article: LiveArticle }) {
         {article.title}
       </h3>
       <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted">{article.summary}</p>
-      <div className="mt-3 flex items-center gap-2 text-[11px] font-semibold text-muted">
-        <span className="text-buletin">{categoryNames[article.category] ?? article.category}</span>
-        <span>•</span>
+      <div className="mt-3 flex items-center gap-2 text-[11px] font-medium text-muted">
         <span>{estimateReadTime(article.bodyMarkdown)}</span>
       </div>
     </Link>
@@ -98,11 +96,7 @@ function SideStoryItem({ article }: { article: LiveArticle }) {
       <h4 className="mt-1 font-serif text-[16px] sm:text-[17px] font-bold text-ink leading-snug line-clamp-2">
         {article.title}
       </h4>
-      <div className="mt-2 text-xs font-semibold text-muted">
-        <span className="text-buletin font-bold">
-          {categoryNames[article.category] ?? article.category}
-        </span>
-        <span>•</span>
+      <div className="mt-2 text-xs font-medium text-muted">
         <span>{estimateReadTime(article.bodyMarkdown)}</span>
       </div>
     </Link>
@@ -165,11 +159,7 @@ function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
             {current.summary}
           </p>
 
-          <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-white/70">
-            <span className="text-buletin font-bold">
-              {categoryNames[current.category] ?? current.category}
-            </span>
-            <span>•</span>
+          <div className="mt-4 flex items-center gap-2 text-xs font-medium text-white/70">
             <span>{estimateReadTime(current.bodyMarkdown)}</span>
           </div>
         </div>
