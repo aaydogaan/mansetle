@@ -53,8 +53,17 @@ Kurallar:
 - Kaynağı metin içinde belirtme; yayın ekranı kaynak bilgisini ayrıca gösterecek.
 - Başlık en fazla 90 karakter, özet en fazla 180 karakter olsun.
 - Gövde 250-450 kelime olsun ve Markdown paragraf biçiminde yazılsın.
-- category yalnızca şunlardan biri olsun: gundem, turkiye, dunya, para, spor, teknoloji, kultur, yasam, eglence.
-- Yalnızca şu JSON nesnesini döndür: {"title":"...","summary":"...","bodyMarkdown":"...","category":"gundem"}.
+- category içeriğe göre en uygun olan seçilmelidir:
+  * Futbol, basketbol, maç sonuçları, transfer, lig, Süper Lig, sporcular -> spor
+  * Ekonomi, finans, borsa, altın, döviz, enflasyon, şirketler, faiz -> para
+  * Yazılım, yapay zeka, siber güvenlik, telefon, bilim, uzay, donanım -> teknoloji
+  * Dış politika, diplomasi, yabancı ülkeler, uluslararası gelişmeler -> dunya
+  * Hükümet, iç politika, genel flaş gelişmeler -> gundem
+  * Yurt içi yerel olaylar, valilik, emniyet, kaza, asayiş -> turkiye
+  * Sanat, edebiyat, sinema, tiyatro, konser, sergi -> kultur
+  * Sağlık, çevre, beslenme, seyahat -> yasam
+  * Magazin, dizi, televizyon, eğlence dünyası -> eglence
+- Yalnızca şu JSON biçimini döndür: {"title":"...","summary":"...","bodyMarkdown":"...","category":"spor|para|teknoloji|gundem|turkiye|dunya|kultur|yasam|eglence"}.
 
 Kaynak: ${input.sourceName}
 Başlık: ${input.sourceTitle}

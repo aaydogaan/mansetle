@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/recep/queue")({
           itemsPromise = sql.query(
             `SELECT f.id, f.external_title AS "title", f.external_url AS "url", s.name AS "sourceName",
                     a.id AS "articleId", a.status, a.title AS "articleTitle", a.summary AS "articleSummary",
-                    a.body_markdown AS "articleBody", a.cover_image_url AS "coverImageUrl",
+                    a.body_markdown AS "articleBody", a.category AS "category", a.cover_image_url AS "coverImageUrl",
                     a.cover_image_mode AS "coverImageMode", a.created_at AS "createdAt", a.published_at AS "publishedAt"
              FROM news_articles a
              JOIN source_feed_items f ON f.id = a.source_feed_item_id
@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/recep/queue")({
           itemsPromise = sql.query(
             `SELECT f.id, f.external_title AS "title", f.external_url AS "url", s.name AS "sourceName",
                     a.id AS "articleId", a.status, a.title AS "articleTitle", a.summary AS "articleSummary",
-                    a.body_markdown AS "articleBody", a.cover_image_url AS "coverImageUrl",
+                    a.body_markdown AS "articleBody", a.category AS "category", a.cover_image_url AS "coverImageUrl",
                     a.cover_image_mode AS "coverImageMode", a.created_at AS "createdAt", a.published_at AS "publishedAt"
              FROM news_articles a
              JOIN source_feed_items f ON f.id = a.source_feed_item_id
@@ -63,12 +63,13 @@ export const Route = createFileRoute("/api/recep/queue")({
         } else {
           // incoming: items in source_feed_items that do NOT have a news_article
           countPromise = sql.query<{ total: number }>(
-            "SELECT GREATEST(0, (SELECT COUNT(*) FROM source_feed_items) - (SELECT COUNT(*) FROM news_articles))::int AS total"
+            `SELECT COUNT(*)::int AS total FROM source_feed_items f
+             WHERE NOT EXISTS (SELECT 1 FROM news_articles a WHERE a.source_feed_item_id = f.id)`
           );
           itemsPromise = sql.query(
             `SELECT f.id, f.external_title AS "title", f.external_url AS "url", s.name AS "sourceName",
                     NULL::bigint AS "articleId", NULL::text AS "status", NULL::text AS "articleTitle",
-                    NULL::text AS "articleSummary", NULL::text AS "articleBody", f.image_url AS "coverImageUrl",
+                    NULL::text AS "articleSummary", NULL::text AS "articleBody", NULL::text AS "category", f.image_url AS "coverImageUrl",
                     'auto'::text AS "coverImageMode", NULL::timestamptz AS "createdAt", NULL::timestamptz AS "publishedAt"
              FROM source_feed_items f
              JOIN news_sources s ON s.id = f.source_id
@@ -81,7 +82,7 @@ export const Route = createFileRoute("/api/recep/queue")({
 
         const countsPromise = sql.query<{ incoming: number; drafts: number; published: number }>(
           `SELECT 
-             GREATEST(0, (SELECT COUNT(*) FROM source_feed_items) - (SELECT COUNT(*) FROM news_articles))::int AS incoming,
+             (SELECT COUNT(*) FROM source_feed_items f WHERE NOT EXISTS (SELECT 1 FROM news_articles a WHERE a.source_feed_item_id = f.id))::int AS incoming,
              (SELECT COUNT(*) FROM news_articles WHERE status = 'draft')::int AS drafts,
              (SELECT COUNT(*) FROM news_articles WHERE status = 'published')::int AS published`
         );

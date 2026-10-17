@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentProps, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, Check, CheckSquare, ChevronLeft, ChevronRight, CircleCheck, ExternalLink, FileImage, FilePenLine, Filter, ImageOff, Inbox, Layers, LoaderCircle, LogOut, Pause, Play, RefreshCw, Save, Send, Sparkles, Square } from "lucide-react";
+import { AlertTriangle, Check, CheckSquare, ChevronLeft, ChevronRight, CircleCheck, ExternalLink, FileImage, FilePenLine, Filter, ImageOff, Inbox, Layers, LoaderCircle, LogOut, Pause, Play, RefreshCw, Save, Send, Sparkles, Square, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/recep")({ component: RecepPage });
 
@@ -15,11 +15,24 @@ type QueueItem = {
   articleTitle: string | null;
   articleSummary: string | null;
   articleBody: string | null;
+  category: string | null;
   coverImageUrl: string | null;
   coverImageMode: "auto" | "manual" | "ai" | "none" | null;
   createdAt: string | null;
   publishedAt: string | null;
 };
+
+const ALL_CATEGORIES = [
+  { id: "gundem", label: "Gündem" },
+  { id: "turkiye", label: "Türkiye" },
+  { id: "dunya", label: "Dünya" },
+  { id: "para", label: "Para" },
+  { id: "spor", label: "Spor" },
+  { id: "teknoloji", label: "Teknoloji" },
+  { id: "kultur", label: "Kültür" },
+  { id: "yasam", label: "Yaşam" },
+  { id: "eglence", label: "Eğlence" },
+];
 type QueuePayload = {
   items: QueueItem[];
   view: QueueView;
@@ -202,6 +215,91 @@ function RecepPage() {
       `${successCount} haber için taslak başarıyla oluşturuldu.${
         failCount > 0 ? ` (${failCount} haber işlenemedi)` : ""
       } Dilediğiniz zaman 'Taslaklar' sekmesine geçip inceleyebilirsiniz.`
+    );
+  };
+
+  const dismissSingle = async (feedItemId: number) => {
+    return run(
+      `dismiss-${feedItemId}`,
+      async () => {
+        const response = await fetch("/api/recep/dismiss", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ feedItemId }),
+        });
+        if (!response.ok) throw new Error(await responseMessage(response));
+        setSelectedIncoming((prev) => prev.filter((id) => id !== feedItemId));
+        await loadQueue(view, queue?.pagination.page || 1);
+        setMessage("Haber listeden silindi ve kaldırıldı.");
+      },
+      "Haber silinemedi."
+    );
+  };
+
+  const dismissBatch = async () => {
+    if (selectedIncoming.length === 0) return;
+    return run(
+      "dismiss-batch",
+      async () => {
+        const response = await fetch("/api/recep/dismiss", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ feedItemIds: selectedIncoming }),
+        });
+        if (!response.ok) throw new Error(await responseMessage(response));
+        const count = selectedIncoming.length;
+        setSelectedIncoming([]);
+        await loadQueue(view, queue?.pagination.page || 1);
+        setMessage(`${count} adet haber başarıyla listeden silindi.`);
+      },
+      "Seçilen haberler silinemedi."
+    );
+  };
+
+  const dismissArticle = async (articleId: number) => {
+    if (!confirm("Bu haberi silmek istediğinizden emin misiniz?")) return;
+    return run(
+      `dismiss-article-${articleId}`,
+      async () => {
+        const response = await fetch("/api/recep/dismiss", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ articleId }),
+        });
+        if (!response.ok) throw new Error(await responseMessage(response));
+        await loadQueue(view, queue?.pagination.page || 1);
+        setMessage("Haber başarıyla silindi.");
+      },
+      "Haber silinemedi."
+    );
+  };
+
+  const updateCategory = async (articleId: number, nextCategory: string) => {
+    return run(
+      `category-${articleId}`,
+      async () => {
+        const response = await fetch("/api/recep/category", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ articleId, category: nextCategory }),
+        });
+        if (!response.ok) throw new Error(await responseMessage(response));
+        setQueue((curr) => {
+          if (!curr) return curr;
+          return {
+            ...curr,
+            items: curr.items.map((i) =>
+              i.articleId === articleId ? { ...i, category: nextCategory } : i
+            ),
+          };
+        });
+        setMessage("Haber kategorisi başarıyla güncellendi.");
+      },
+      "Kategori güncellenemedi."
     );
   };
 
@@ -684,6 +782,16 @@ function RecepPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => void dismissBatch()}
+                      disabled={batchLoading}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs sm:text-sm font-bold text-red-700 hover:bg-red-100 transition disabled:opacity-50"
+                      title="Seçilen mükerrer veya istenmeyen haberleri sil"
+                    >
+                      <Trash2 className="size-3.5 sm:size-4" />
+                      <span>Seçilenleri Sil ({selectedIncoming.length})</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => void generateBatch()}
                       disabled={batchLoading || !systemActive}
                       className="inline-flex items-center gap-2 rounded-lg bg-buletin px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-sm hover:opacity-95 transition disabled:opacity-50"
@@ -818,35 +926,98 @@ function RecepPage() {
 
                       <div className="w-full shrink-0 md:w-auto flex items-center gap-2 justify-end">
                         {item.status === "published" ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/15 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                            <Check className="size-3.5" /> Yayında
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2 justify-end">
+                            <select
+                              value={item.category || "gundem"}
+                              onChange={(e) => void updateCategory(item.articleId!, e.target.value)}
+                              disabled={busy === `category-${item.articleId}`}
+                              className="h-9 rounded-lg border border-line bg-surface px-2.5 text-xs font-bold text-ink outline-none focus:border-buletin cursor-pointer"
+                              title="Haberi başka bir kategoriye taşı"
+                            >
+                              {ALL_CATEGORIES.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.label}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/15 px-3 py-1.5 text-xs font-bold text-emerald-700">
+                              <Check className="size-3.5" /> Yayında
+                            </span>
+                            <button
+                              type="button"
+                              disabled={busy === `dismiss-article-${item.articleId}`}
+                              onClick={() => void dismissArticle(item.articleId!)}
+                              title="Haberi sil ve yayından kaldır"
+                              className="inline-flex size-9 items-center justify-center rounded-lg border border-line bg-paper text-muted hover:text-red-700 hover:border-red-300 transition disabled:opacity-50"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
                         ) : hasArticle ? (
-                          <ActionButton
-                            disabled={busy === `publish-${item.articleId}`}
-                            onClick={() => void publish(item)}
-                            className="bg-buletin text-white shadow-sm hover:opacity-95"
-                          >
-                            {busy === `publish-${item.articleId}` ? (
-                              <LoaderCircle className="size-4 animate-spin" />
-                            ) : (
-                              <Send className="size-4" />
-                            )}
-                            Yayınla
-                          </ActionButton>
+                          <div className="flex flex-wrap items-center gap-2 justify-end">
+                            <select
+                              value={item.category || "gundem"}
+                              onChange={(e) => void updateCategory(item.articleId!, e.target.value)}
+                              disabled={busy === `category-${item.articleId}`}
+                              className="h-9 rounded-lg border border-line bg-surface px-2.5 text-xs font-bold text-ink outline-none focus:border-buletin cursor-pointer"
+                              title="Taslağın kategorisini belirle"
+                            >
+                              {ALL_CATEGORIES.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.label}
+                                </option>
+                              ))}
+                            </select>
+                            <ActionButton
+                              disabled={busy === `publish-${item.articleId}`}
+                              onClick={() => void publish(item)}
+                              className="bg-buletin text-white shadow-sm hover:opacity-95"
+                            >
+                              {busy === `publish-${item.articleId}` ? (
+                                <LoaderCircle className="size-4 animate-spin" />
+                              ) : (
+                                <Send className="size-4" />
+                              )}
+                              Yayınla
+                            </ActionButton>
+                            <button
+                              type="button"
+                              disabled={busy === `dismiss-article-${item.articleId}`}
+                              onClick={() => void dismissArticle(item.articleId!)}
+                              title="Taslağı sil"
+                              className="inline-flex size-9 items-center justify-center rounded-lg border border-line bg-paper text-muted hover:text-red-700 hover:border-red-300 transition disabled:opacity-50"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
                         ) : (
-                          <ActionButton
-                            disabled={busy === `generate-${item.id}` || batchLoading}
-                            onClick={() => void generate(item)}
-                            className="bg-ink text-surface"
-                          >
-                            {busy === `generate-${item.id}` ? (
-                              <LoaderCircle className="size-4 animate-spin" />
-                            ) : (
-                              <Sparkles className="size-4" />
-                            )}
-                            Taslak oluştur
-                          </ActionButton>
+                          <div className="flex items-center gap-2">
+                            <ActionButton
+                              disabled={busy === `generate-${item.id}` || batchLoading}
+                              onClick={() => void generate(item)}
+                              className="bg-ink text-surface"
+                            >
+                              {busy === `generate-${item.id}` ? (
+                                <LoaderCircle className="size-4 animate-spin" />
+                              ) : (
+                                <Sparkles className="size-4" />
+                              )}
+                              Taslak oluştur
+                            </ActionButton>
+                            <button
+                              type="button"
+                              disabled={busy === `dismiss-${item.id}` || batchLoading}
+                              onClick={() => void dismissSingle(item.id)}
+                              title="Bu haberi listeden sil (mükerrer veya gereksiz haberi kaldır)"
+                              className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition disabled:opacity-50"
+                            >
+                              {busy === `dismiss-${item.id}` ? (
+                                <LoaderCircle className="size-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="size-4" />
+                              )}
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
