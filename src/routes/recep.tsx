@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentProps, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, Check, ChevronLeft, ChevronRight, CircleCheck, FileImage, FilePenLine, ImageOff, Inbox, LoaderCircle, LogOut, Pause, Play, RefreshCw, Save, Send, Sparkles } from "lucide-react";
+import { AlertTriangle, Check, CheckSquare, ChevronLeft, ChevronRight, CircleCheck, ExternalLink, FileImage, FilePenLine, Filter, ImageOff, Inbox, Layers, LoaderCircle, LogOut, Pause, Play, RefreshCw, Save, Send, Sparkles, Square } from "lucide-react";
 
 export const Route = createFileRoute("/recep")({ component: RecepPage });
 
@@ -73,6 +73,10 @@ function RecepPage() {
   const [systemActive, setSystemActive] = useState<boolean>(true);
   const [showPauseModal, setShowPauseModal] = useState<boolean>(false);
   const [togglingSystem, setTogglingSystem] = useState<boolean>(false);
+  const [selectedIncoming, setSelectedIncoming] = useState<number[]>([]);
+  const [batchLoading, setBatchLoading] = useState<boolean>(false);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; title: string } | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
 
   const loadSettings = async () => {
     try {
@@ -113,6 +117,9 @@ function RecepPage() {
 
   const loadQueue = async (nextView = view, page = 1) => {
     setLoadingView(true);
+    if (nextView !== view) {
+      setSelectedIncoming([]);
+    }
     try {
       const response = await fetch(`/api/recep/queue?view=${nextView}&page=${page}`, {
         credentials: "include",
@@ -130,6 +137,72 @@ function RecepPage() {
     } finally {
       setLoadingView(false);
     }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIncoming((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllCurrentPage = (itemsOnPage: QueueItem[]) => {
+    const ids = itemsOnPage.map((i) => i.id);
+    const allSelected = ids.length > 0 && ids.every((id) => selectedIncoming.includes(id));
+    if (allSelected) {
+      setSelectedIncoming((prev) => prev.filter((id) => !ids.includes(id)));
+    } else {
+      setSelectedIncoming((prev) => Array.from(new Set([...prev, ...ids])));
+    }
+  };
+
+  const generateBatch = async () => {
+    if (!systemActive) {
+      setMessage("Sistem duraklatılmıştır. Yeni taslak oluşturmak için önce 'Sistemi Aç' butonuna tıklayın.");
+      return;
+    }
+    if (selectedIncoming.length === 0) return;
+    const idsToProcess = [...selectedIncoming];
+    setBatchLoading(true);
+    setBusy("batch-generate");
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < idsToProcess.length; i++) {
+      const id = idsToProcess[i];
+      const currentItem = queue?.items.find((x) => x.id === id);
+      setBatchProgress({
+        current: i + 1,
+        total: idsToProcess.length,
+        title: currentItem?.title || `#${id}`,
+      });
+
+      try {
+        const response = await fetch("/api/recep/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ sourceFeedItemId: id }),
+        });
+        if (response.ok) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch {
+        failCount++;
+      }
+    }
+
+    setBatchProgress(null);
+    setBatchLoading(false);
+    setBusy(null);
+    setSelectedIncoming([]);
+    await loadQueue("incoming", queue?.pagination.page || 1);
+    setMessage(
+      `${successCount} haber için taslak başarıyla oluşturuldu.${
+        failCount > 0 ? ` (${failCount} haber işlenemedi)` : ""
+      } Dilediğiniz zaman 'Taslaklar' sekmesine geçip inceleyebilirsiniz.`
+    );
   };
 
   useEffect(() => {
@@ -221,8 +294,9 @@ function RecepPage() {
           body: JSON.stringify({ sourceFeedItemId: item.id }),
         });
         if (!response.ok) throw new Error(await responseMessage(response));
-        await loadQueue("drafts");
-        setMessage("Taslak oluşturuldu ve Taslaklar bölümüne taşındı.");
+        // STAY ON INCOMING! Do not jump to drafts
+        await loadQueue("incoming", queue?.pagination.page || 1);
+        setMessage("Taslak oluşturuldu. Dilediğiniz zaman 'Taslaklar' sekmesine geçerek inceleyebilirsiniz.");
       },
       "Taslak oluşturulamadı."
     );
@@ -536,83 +610,246 @@ function RecepPage() {
             {queue ? <span className="shrink-0 text-sm text-muted">Toplam {queue.pagination.total} kayıt</span> : null}
           </div>
 
+          {/* Gelen Haberler İçin Filtreleme ve Toplu İşlem Çubuğu */}
+          {view === "incoming" && queue && queue.items.length > 0 && (
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-paper p-3 sm:p-4">
+                {/* Kaynak Filtreleri */}
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted mr-1">Kaynak:</span>
+                  {[
+                    { id: "all", label: "Tümü" },
+                    { id: "ntv", label: "NTV Teknoloji" },
+                    { id: "trt", label: "TRT Haber" },
+                    { id: "aa", label: "Anadolu Ajansı" },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setSourceFilter(f.id)}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                        sourceFilter === f.id
+                          ? "bg-ink text-surface shadow-xs"
+                          : "border border-line bg-surface text-muted hover:text-ink hover:border-buletin/40"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tümünü Seç Butonu */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => selectAllCurrentPage(queue.items)}
+                    disabled={batchLoading}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink hover:border-buletin/60 transition disabled:opacity-50"
+                  >
+                    {queue.items.length > 0 && queue.items.every((i) => selectedIncoming.includes(i.id)) ? (
+                      <>
+                        <CheckSquare className="size-3.5 text-buletin" />
+                        <span>Seçimi Kaldır</span>
+                      </>
+                    ) : (
+                      <>
+                        <Square className="size-3.5 text-muted" />
+                        <span>Sayfadaki Tümünü Seç ({queue.items.length})</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Seçilenler Varsa: Toplu Aksiyon Bannerı */}
+              {selectedIncoming.length > 0 && (
+                <div className="sticky top-20 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-buletin bg-buletin/10 p-3.5 sm:p-4 shadow-md backdrop-blur-md">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-7 items-center justify-center rounded-full bg-buletin text-white text-xs font-bold">
+                      {selectedIncoming.length}
+                    </span>
+                    <span className="font-serif font-bold text-ink sm:text-base text-sm">
+                      {selectedIncoming.length} adet haber seçildi
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIncoming([])}
+                      disabled={batchLoading}
+                      className="rounded-lg border border-line bg-paper px-3 py-2 text-xs font-bold text-muted hover:text-ink transition disabled:opacity-50"
+                    >
+                      Vazgeç / Temizle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void generateBatch()}
+                      disabled={batchLoading || !systemActive}
+                      className="inline-flex items-center gap-2 rounded-lg bg-buletin px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-sm hover:opacity-95 transition disabled:opacity-50"
+                    >
+                      {batchLoading ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="size-4" />
+                      )}
+                      <span>Seçilenlerden Taslak Hazırla ({selectedIncoming.length})</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Toplu İşlem Süreci İlerleme Göstergesi */}
+              {batchLoading && batchProgress && (
+                <div className="rounded-2xl border border-buletin/40 bg-paper p-4 shadow-sm animate-pulse">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="flex items-center gap-2 text-buletin">
+                      <LoaderCircle className="size-4 animate-spin" />
+                      Yapay Zeka ile Taslaklar Hazırlanıyor...
+                    </span>
+                    <span className="text-ink">
+                      {batchProgress.current} / {batchProgress.total}
+                    </span>
+                  </div>
+                  <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-soft">
+                    <div
+                      className="h-full bg-buletin transition-all duration-300"
+                      style={{
+                        width: `${Math.round((batchProgress.current / batchProgress.total) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-muted truncate">
+                    İşlenen: <strong>{batchProgress.title}</strong>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className={`mt-5 grid gap-4 transition-opacity ${loadingView ? "opacity-60" : "opacity-100"}`}>
-            {queue?.items.map((item) => {
-              const timestamp = formatDate(item.status === "published" ? item.publishedAt : item.createdAt);
-              const hasArticle = Boolean(item.articleId);
-              const effectiveCover = coverUrls[item.articleId!] ?? item.coverImageUrl;
+            {queue?.items
+              .filter((item) => {
+                if (view !== "incoming") return true;
+                if (sourceFilter === "all") return true;
+                if (sourceFilter === "ntv") return item.sourceName.toLowerCase().includes("ntv");
+                if (sourceFilter === "trt") return item.sourceName.toLowerCase().includes("trt");
+                if (sourceFilter === "aa")
+                  return (
+                    item.sourceName.toLowerCase().includes("anadolu") ||
+                    item.sourceName.toLowerCase().includes("aa")
+                  );
+                return true;
+              })
+              .map((item) => {
+                const timestamp = formatDate(item.status === "published" ? item.publishedAt : item.createdAt);
+                const hasArticle = Boolean(item.articleId);
+                const effectiveCover = coverUrls[item.articleId!] ?? item.coverImageUrl;
+                const isSelected = selectedIncoming.includes(item.id);
 
-              return (
-                <article key={item.id} className="rounded-2xl border border-line bg-paper p-4 sm:p-5">
-                  <div className="flex flex-col justify-between gap-4 md:flex-row">
-                    <div className="flex gap-4 max-w-3xl">
-                      {/* Küçük Liste Kapak Önizleme (Varsa) */}
-                      {item.coverImageUrl && item.coverImageMode !== "none" ? (
-                        <div className="hidden sm:block size-20 shrink-0 overflow-hidden rounded-xl border border-line bg-soft">
-                          <img
-                            src={item.coverImageUrl}
-                            alt=""
-                            referrerPolicy="no-referrer"
-                            className="size-full object-cover"
-                          />
-                        </div>
-                      ) : null}
+                return (
+                  <article
+                    key={item.id}
+                    className={`rounded-2xl border p-4 sm:p-5 transition-all ${
+                      isSelected
+                        ? "border-buletin bg-buletin/[0.03] ring-2 ring-buletin/20"
+                        : "border-line bg-paper"
+                    }`}
+                  >
+                    <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                      <div className="flex items-start gap-3 sm:gap-4 max-w-3xl">
+                        {/* Gelen Haberler İçin Checkbox */}
+                        {view === "incoming" && (
+                          <div className="pt-1">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelect(item.id)}
+                              disabled={batchLoading}
+                              aria-label={`${item.title} seç`}
+                              className="size-4.5 rounded border-line text-buletin accent-buletin cursor-pointer focus:ring-buletin"
+                            />
+                          </div>
+                        )}
 
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs font-bold tracking-wide text-buletin uppercase">{item.sourceName}</p>
-                          {savedCoverId === item.articleId ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                              <Check className="size-3" /> Kapak güncellendi
-                            </span>
-                          ) : null}
+                        {/* Küçük Liste Kapak Önizleme (Varsa) */}
+                        {item.coverImageUrl && item.coverImageMode !== "none" ? (
+                          <div className="hidden sm:block size-20 shrink-0 overflow-hidden rounded-xl border border-line bg-soft">
+                            <img
+                              src={item.coverImageUrl}
+                              alt=""
+                              referrerPolicy="no-referrer"
+                              className="size-full object-cover"
+                            />
+                          </div>
+                        ) : null}
+
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-bold tracking-wide text-buletin uppercase">{item.sourceName}</p>
+                            {savedCoverId === item.articleId ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                <Check className="size-3" /> Kapak güncellendi
+                              </span>
+                            ) : null}
+                          </div>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 block break-words font-serif text-lg font-bold hover:text-buletin sm:text-xl"
+                          >
+                            {item.status ? item.articleTitle : item.title}
+                          </a>
+                          <div className="mt-2 flex items-center gap-3 text-xs text-muted">
+                            {timestamp ? <span>{timestamp}</span> : null}
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-buletin hover:underline"
+                            >
+                              <span>Orijinal Kaynak</span>
+                              <ExternalLink className="size-3" />
+                            </a>
+                          </div>
                         </div>
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-2 block break-words font-serif text-lg font-bold hover:text-buletin sm:text-xl"
-                        >
-                          {item.status ? item.articleTitle : item.title}
-                        </a>
-                        {timestamp ? <p className="mt-2 text-xs text-muted">{timestamp}</p> : null}
+                      </div>
+
+                      <div className="w-full shrink-0 md:w-auto flex items-center gap-2 justify-end">
+                        {item.status === "published" ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/15 px-3 py-1.5 text-xs font-bold text-emerald-700">
+                            <Check className="size-3.5" /> Yayında
+                          </span>
+                        ) : hasArticle ? (
+                          <ActionButton
+                            disabled={busy === `publish-${item.articleId}`}
+                            onClick={() => void publish(item)}
+                            className="bg-buletin text-white shadow-sm hover:opacity-95"
+                          >
+                            {busy === `publish-${item.articleId}` ? (
+                              <LoaderCircle className="size-4 animate-spin" />
+                            ) : (
+                              <Send className="size-4" />
+                            )}
+                            Yayınla
+                          </ActionButton>
+                        ) : (
+                          <ActionButton
+                            disabled={busy === `generate-${item.id}` || batchLoading}
+                            onClick={() => void generate(item)}
+                            className="bg-ink text-surface"
+                          >
+                            {busy === `generate-${item.id}` ? (
+                              <LoaderCircle className="size-4 animate-spin" />
+                            ) : (
+                              <Sparkles className="size-4" />
+                            )}
+                            Taslak oluştur
+                          </ActionButton>
+                        )}
                       </div>
                     </div>
-
-                    <div className="w-full shrink-0 md:w-auto flex items-center gap-2">
-                      {item.status === "published" ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/15 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                          <Check className="size-3.5" /> Yayında
-                        </span>
-                      ) : hasArticle ? (
-                        <ActionButton
-                          disabled={busy === `publish-${item.articleId}`}
-                          onClick={() => void publish(item)}
-                          className="bg-buletin text-white shadow-sm hover:opacity-95"
-                        >
-                          {busy === `publish-${item.articleId}` ? (
-                            <LoaderCircle className="size-4 animate-spin" />
-                          ) : (
-                            <Send className="size-4" />
-                          )}
-                          Yayınla
-                        </ActionButton>
-                      ) : (
-                        <ActionButton
-                          disabled={busy === `generate-${item.id}`}
-                          onClick={() => void generate(item)}
-                          className="bg-ink text-surface"
-                        >
-                          {busy === `generate-${item.id}` ? (
-                            <LoaderCircle className="size-4 animate-spin" />
-                          ) : (
-                            <Sparkles className="size-4" />
-                          )}
-                          Taslak oluştur
-                        </ActionButton>
-                      )}
-                    </div>
-                  </div>
 
                   {hasArticle ? (
                     <details className="mt-5 border-t border-line pt-4">

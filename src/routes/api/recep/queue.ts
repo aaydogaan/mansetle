@@ -18,7 +18,7 @@ export const Route = createFileRoute("/api/recep/queue")({
         const url = new URL(request.url);
         const view = parseView(url.searchParams.get("view"));
         const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
-        const pageSize = 8;
+        const pageSize = 12;
         const offset = (page - 1) * pageSize;
 
         const sql = await getSql();
@@ -68,8 +68,8 @@ export const Route = createFileRoute("/api/recep/queue")({
           itemsPromise = sql.query(
             `SELECT f.id, f.external_title AS "title", f.external_url AS "url", s.name AS "sourceName",
                     NULL::bigint AS "articleId", NULL::text AS "status", NULL::text AS "articleTitle",
-                    NULL::text AS "articleSummary", NULL::text AS "articleBody", NULL::text AS "coverImageUrl",
-                    NULL::text AS "coverImageMode", NULL::timestamptz AS "createdAt", NULL::timestamptz AS "publishedAt"
+                    NULL::text AS "articleSummary", NULL::text AS "articleBody", f.image_url AS "coverImageUrl",
+                    'auto'::text AS "coverImageMode", NULL::timestamptz AS "createdAt", NULL::timestamptz AS "publishedAt"
              FROM source_feed_items f
              JOIN news_sources s ON s.id = f.source_id
              WHERE NOT EXISTS (SELECT 1 FROM news_articles a WHERE a.source_feed_item_id = f.id)

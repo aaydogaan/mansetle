@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
   gcTime: 300_000,
   loader: async () => {
     const [articles, superLigData] = await Promise.all([
-      getPublishedArticles({ data: { limit: 36 } }),
+      getPublishedArticles({ data: { limit: 60 } }),
       getSuperLigDataFn().catch(() => null),
     ]);
     return { articles, superLigData };

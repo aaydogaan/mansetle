@@ -7,6 +7,7 @@ import { estimateReadTime, formatRelativeTime } from "@/lib/utils";
 import { BreakingNewsBar } from "./BreakingNewsBar";
 import { SuperLigWidget } from "./SuperLigWidget";
 import type { SuperLigData } from "@/lib/superlig.server";
+import { curateHomepage } from "@/lib/curation";
 
 function ArticleImage({
   article,
@@ -221,38 +222,21 @@ export function HomePage({
     }
   }, [initialArticles]);
 
-  // Sayfalama ve Bölüm Paylaşımı
-  // 1. Öne Çıkanlar (Sol 2 Haber + Orta Geniş 5s Dönen + Sağ 2 Haber)
-  const leftStory1 = items[0];
-  const leftStory2 = items[1];
-  const centerRotatingStories = items.slice(2, 7); // 5 haber, 5 saniyede bir döner
-  const rightStory1 = items[7];
-  const rightStory2 = items[8];
-
-  // 2. Son Haberler (4'lü ızgara)
-  const latestNews = items.slice(9, 13);
-
-  // 3. Editörün Seçimi
-  const editorsPick = items[13];
-  const editorsGrid = items.slice(14, 18);
-
-  // 4. Kategori İkilileri
-  const gundemEkonomiPool = items.filter((a) =>
-    ["gundem", "turkiye", "para"].includes(a.category)
-  );
-  const catLeft = (
-    gundemEkonomiPool.length >= 2 ? gundemEkonomiPool : items.slice(18, 20)
-  ).slice(0, 2);
-
-  const sporTeknolojiPool = items.filter((a) =>
-    ["spor", "teknoloji"].includes(a.category)
-  );
-  const catRight = (
-    sporTeknolojiPool.length >= 2 ? sporTeknolojiPool : items.slice(20, 22)
-  ).slice(0, 2);
-
-  // 5. Kalan Gelişmeler
-  const moreNews = items.slice(22, 34);
+  // Editoryal Dengeleme ve Sayfalama (Hiçbir kategori sayfayı tekeline alamaz)
+  const {
+    centerRotatingStories,
+    leftStory1,
+    leftStory2,
+    rightStory1,
+    rightStory2,
+    latestNews,
+    editorsPick,
+    editorsGrid,
+    catLeftGundemEkonomi,
+    catRightSpor,
+    techShowcase,
+    moreNews,
+  } = curateHomepage(items);
 
   return (
     <div className="pb-16 md:pb-24">
@@ -403,10 +387,13 @@ export function HomePage({
             <div className="grid gap-10 lg:grid-cols-12 items-start">
               {/* Sol Sütun: Gündem & Spor Haberleri (7 Kolon) */}
               <div className="lg:col-span-7 space-y-12">
-                {catLeft.length > 0 && (
+                {catLeftGundemEkonomi.length > 0 && (
                   <div>
                     <div className="mb-5 flex items-center justify-between border-b border-line pb-3">
-                      <h3 className="font-serif text-xl font-bold text-ink">Gündem & Ekonomi</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="size-2 rounded-full bg-buletin inline-block" />
+                        <h3 className="font-serif text-xl font-bold text-ink">Gündem & Ekonomi</h3>
+                      </div>
                       <Link
                         to="/kategori/$slug"
                         params={{ slug: "para" }}
@@ -416,17 +403,20 @@ export function HomePage({
                       </Link>
                     </div>
                     <div className="grid gap-5 sm:grid-cols-2">
-                      {catLeft.map((article) => (
+                      {catLeftGundemEkonomi.map((article) => (
                         <GridCard key={article.slug} article={article} />
                       ))}
                     </div>
                   </div>
                 )}
 
-                {catRight.length > 0 && (
+                {catRightSpor.length > 0 && (
                   <div>
                     <div className="mb-5 flex items-center justify-between border-b border-line pb-3">
-                      <h3 className="font-serif text-xl font-bold text-ink">Spor & Teknoloji</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="size-2 rounded-full bg-buletin inline-block" />
+                        <h3 className="font-serif text-xl font-bold text-ink">Spor Dünyası</h3>
+                      </div>
                       <Link
                         to="/kategori/$slug"
                         params={{ slug: "spor" }}
@@ -436,7 +426,7 @@ export function HomePage({
                       </Link>
                     </div>
                     <div className="grid gap-5 sm:grid-cols-2">
-                      {catRight.map((article) => (
+                      {catRightSpor.map((article) => (
                         <GridCard key={article.slug} article={article} />
                       ))}
                     </div>
@@ -451,7 +441,38 @@ export function HomePage({
             </div>
           </section>
 
-          {/* 5. Tüm Gelişmeler */}
+          {/* 5. Özel Teknoloji & İnovasyon Vitrini (NTV Teknoloji ve Dijital Dünya) */}
+          {techShowcase.length > 0 ? (
+            <section className="container-buletin mt-14 md:mt-20">
+              <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-buletin animate-pulse inline-block" />
+                    <h2 className="font-serif text-[24px] font-bold text-ink sm:text-[28px]">
+                      Teknoloji & İnovasyon
+                    </h2>
+                  </div>
+                  <p className="mt-1 text-xs text-muted">
+                    Yapay zeka, dijital dünya, bilim ve teknolojiden en son gelişmeler
+                  </p>
+                </div>
+                <Link
+                  to="/kategori/$slug"
+                  params={{ slug: "teknoloji" }}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-buletin hover:underline"
+                >
+                  Tümünü gör <ChevronRight className="size-3.5" />
+                </Link>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {techShowcase.map((article) => (
+                  <GridCard key={article.slug} article={article} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {/* 6. Tüm Gelişmeler */}
           {moreNews.length > 0 ? (
             <section className="container-buletin mt-14 md:mt-20">
               <div className="mb-6 flex items-center justify-between border-b border-line pb-4">

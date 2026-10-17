@@ -17,7 +17,7 @@ export const getPublishedArticles = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<LiveArticle[]> => {
     try {
       const { listPublishedArticles } = await import("@/lib/news.server");
-      const limit = Math.min(Math.max(data.limit ?? 18, 1), 48);
+      const limit = Math.min(Math.max(data.limit ?? 24, 1), 72);
       return await listPublishedArticles(data.category, limit);
     } catch (error) {
       console.error("[news] could not load homepage articles", error);
