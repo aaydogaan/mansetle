@@ -11,16 +11,68 @@ const feeds = {
 
 function clean(value: string): string { return value.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, " ").trim(); }
 function tagValue(item: string, tag: string): string { const match = item.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i")); return clean(match?.[1] ?? ""); }
+
 function imageUrl(item: string): string | null {
-  const match = item.match(/<(?:media:content|media:thumbnail|enclosure|image)[^>]+\burl=["']([^"']+)["']/i) ?? item.match(/<img[^>]+\bsrc=["']([^"']+)["']/i);
-  return match?.[1] ? clean(match[1]) : null;
+  // 1. AA style: <image>https://...</image>
+  const imageTagMatch = item.match(/<image\b[^>]*>(?:<!\[CDATA\[)?\s*(https?:\/\/[^\]<]+)\s*(?:\]\]>)?<\/image>/i);
+  if (imageTagMatch?.[1]) return clean(imageTagMatch[1]);
+
+  // 2. enclosure or media:content with url attribute (TRT)
+  const attrMatch = item.match(/<(?:media:content|media:thumbnail|enclosure|image)[^>]+\burl=["']([^"']+)["']/i);
+  if (attrMatch?.[1]) return clean(attrMatch[1]);
+
+  // 3. img tag inside description or content
+  const imgMatch = item.match(/<img[^>]+\bsrc=["']([^"']+)["']/i);
+  if (imgMatch?.[1]) return clean(imgMatch[1]);
+
+  return null;
 }
+
+async function fetchOgImage(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal: AbortSignal.timeout(3500),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const match =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ??
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ??
+      html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+    if (match?.[1] && /^https?:\/\//i.test(match[1])) {
+      return match[1].trim();
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 function parseFeed(xml: string): FeedItem[] { return [...xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)].map((match) => { const source = match[1] ?? ""; return { title: tagValue(source, "title"), url: tagValue(source, "link"), publishedAt: tagValue(source, "pubDate") || null, imageUrl: imageUrl(source) }; }).filter((item) => item.title && item.url).slice(0, 10); }
 
 async function saveFeedItems(sourceId: keyof typeof feeds, feed: (typeof feeds)[keyof typeof feeds], items: FeedItem[]) {
   const sql = await getSql();
   await sql.query(`INSERT INTO news_sources (id, name, feed_url, website_url) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, feed_url = EXCLUDED.feed_url, updated_at = now()`, [sourceId, feed.name, feed.url, new URL(feed.url).origin]);
-  await Promise.all(items.map((item) => sql.query(`INSERT INTO source_feed_items (source_id, external_url, external_title, published_at, image_url) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (source_id, external_url) DO UPDATE SET external_title = EXCLUDED.external_title, published_at = COALESCE(EXCLUDED.published_at, source_feed_items.published_at), image_url = COALESCE(EXCLUDED.image_url, source_feed_items.image_url), last_seen_at = now()`, [sourceId, item.url, item.title, item.publishedAt, item.imageUrl])));
+  await Promise.all(items.map(async (item) => {
+    let finalImg = item.imageUrl;
+    if (!finalImg) {
+      finalImg = await fetchOgImage(item.url);
+    }
+    return sql.query(
+      `INSERT INTO source_feed_items (source_id, external_url, external_title, published_at, image_url)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (source_id, external_url)
+       DO UPDATE SET external_title = EXCLUDED.external_title,
+                     published_at = COALESCE(EXCLUDED.published_at, source_feed_items.published_at),
+                     image_url = COALESCE(EXCLUDED.image_url, source_feed_items.image_url),
+                     last_seen_at = now()`,
+      [sourceId, item.url, item.title, item.publishedAt, finalImg]
+    );
+  }));
 }
 
 export const Route = createFileRoute("/api/source-feed/$source")({

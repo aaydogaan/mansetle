@@ -33,6 +33,70 @@ export function invalidateArticleCache() {
   globalCache.__singleArticleCache__?.clear();
 }
 
+async function fetchOgImage(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal: AbortSignal.timeout(3500),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const match =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ??
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ??
+      html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+    if (match?.[1] && /^https?:\/\//i.test(match[1])) {
+      return match[1].trim();
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+let isBackfilling = false;
+async function backfillMissingImages() {
+  if (isBackfilling) return;
+  isBackfilling = true;
+  try {
+    const sql = await getSql();
+    const rows = await sql.query<{ id: number; externalUrl: string; articleId: number }>(
+      `SELECT f.id, f.external_url AS "externalUrl", a.id AS "articleId"
+       FROM source_feed_items f
+       JOIN news_articles a ON a.source_feed_item_id = f.id
+       WHERE a.status = 'published' AND (f.image_url IS NULL OR f.image_url = '' OR a.cover_image_url IS NULL)
+       ORDER BY a.published_at DESC
+       LIMIT 12`
+    );
+    if (rows.length === 0) {
+      isBackfilling = false;
+      return;
+    }
+    let updated = false;
+    for (const row of rows) {
+      const img = await fetchOgImage(row.externalUrl);
+      if (img) {
+        await sql.query("UPDATE source_feed_items SET image_url = $1 WHERE id = $2", [img, row.id]);
+        await sql.query(
+          "UPDATE news_articles SET cover_image_url = $1 WHERE id = $2 AND (cover_image_url IS NULL OR cover_image_url = '')",
+          [img, row.articleId]
+        );
+        updated = true;
+      }
+    }
+    if (updated) {
+      invalidateArticleCache();
+    }
+  } catch (err) {
+    console.error("[backfill] error backfilling images", err);
+  } finally {
+    isBackfilling = false;
+  }
+}
+
 export async function listPublishedArticles(category?: string, limit = 24): Promise<LiveArticle[]> {
   const cacheKey = `${category ?? "all"}:${limit}`;
   const cached = globalCache.__articleListCache__?.get(cacheKey);
@@ -52,12 +116,36 @@ export async function listPublishedArticles(category?: string, limit = 24): Prom
     rows = await sql.query<LiveArticle>(`${selectArticle} ORDER BY a.published_at DESC LIMIT $1`, [limit]);
   }
 
+  // Check if any articles have missing images, and run non-blocking repair in background
+  if (rows.some((item) => !item.imageUrl)) {
+    backfillMissingImages().catch(() => {});
+  }
+
   globalCache.__articleListCache__?.set(cacheKey, {
     data: rows,
     expiresAt: now + LIST_CACHE_TTL,
   });
 
   return rows;
+}
+
+async function ensureArticleHasImage(article: LiveArticle & { articleId?: number }): Promise<LiveArticle> {
+  if (!article.imageUrl && article.sourceUrl) {
+    const realImg = await fetchOgImage(article.sourceUrl);
+    if (realImg) {
+      article.imageUrl = realImg;
+      try {
+        const sql = await getSql();
+        if (article.articleId) {
+          await sql.query("UPDATE news_articles SET cover_image_url = $1 WHERE id = $2", [realImg, article.articleId]);
+        }
+        await sql.query("UPDATE source_feed_items SET image_url = $1 WHERE external_url = $2", [realImg, article.sourceUrl]);
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return article;
 }
 
 export async function findPublishedArticle(slug: string): Promise<LiveArticle | null> {
@@ -77,8 +165,9 @@ export async function findPublishedArticle(slug: string): Promise<LiveArticle | 
     [slug],
   );
   if (rows[0]) {
-    globalCache.__singleArticleCache__?.set(slug, { data: rows[0], expiresAt: now + ARTICLE_CACHE_TTL });
-    return rows[0];
+    const article = await ensureArticleHasImage(rows[0]);
+    globalCache.__singleArticleCache__?.set(slug, { data: article, expiresAt: now + ARTICLE_CACHE_TTL });
+    return article;
   }
 
   // 2. Normalized Turkish slug match
@@ -88,8 +177,9 @@ export async function findPublishedArticle(slug: string): Promise<LiveArticle | 
       [normalizedSearchSlug],
     );
     if (normRows[0]) {
-      globalCache.__singleArticleCache__?.set(slug, { data: normRows[0], expiresAt: now + ARTICLE_CACHE_TTL });
-      return normRows[0];
+      const article = await ensureArticleHasImage(normRows[0]);
+      globalCache.__singleArticleCache__?.set(slug, { data: article, expiresAt: now + ARTICLE_CACHE_TTL });
+      return article;
     }
   }
 
@@ -102,8 +192,9 @@ export async function findPublishedArticle(slug: string): Promise<LiveArticle | 
       [fallbackId],
     );
     if (fallbackRows[0]) {
-      globalCache.__singleArticleCache__?.set(slug, { data: fallbackRows[0], expiresAt: now + ARTICLE_CACHE_TTL });
-      return fallbackRows[0];
+      const article = await ensureArticleHasImage(fallbackRows[0]);
+      globalCache.__singleArticleCache__?.set(slug, { data: article, expiresAt: now + ARTICLE_CACHE_TTL });
+      return article;
     }
   }
 
@@ -131,10 +222,11 @@ export async function findPublishedArticle(slug: string): Promise<LiveArticle | 
       } catch {
         // In case of conflict, ignore
       }
-      const matched = await sql.query<LiveArticle>(`${selectArticle} AND a.id = $1 LIMIT 1`, [item.id]);
+      const matched = await sql.query<LiveArticle & { articleId: number }>(`${selectArticle} AND a.id = $1 LIMIT 1`, [item.id]);
       if (matched[0]) {
-        globalCache.__singleArticleCache__?.set(slug, { data: matched[0], expiresAt: now + ARTICLE_CACHE_TTL });
-        return matched[0];
+        const article = await ensureArticleHasImage(matched[0]);
+        globalCache.__singleArticleCache__?.set(slug, { data: article, expiresAt: now + ARTICLE_CACHE_TTL });
+        return article;
       }
     }
   }
