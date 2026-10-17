@@ -164,7 +164,7 @@ function ArticlePage() {
             <div className="flex flex-wrap items-center gap-2 text-muted">
               <span className="font-bold text-ink">Mansetle Editörü</span>
               <span>•</span>
-              <time dateTime={article.publishedAt ?? undefined}>
+              <time suppressHydrationWarning dateTime={article.publishedAt ?? undefined}>
                 {formatFullDateTime(article.publishedAt)}
               </time>
               <span>•</span>
@@ -311,7 +311,7 @@ function ArticlePage() {
                       {categoryNames[item.category] ?? item.category}
                     </span>
                     <span>•</span>
-                    <span>{formatRelativeTime(item.publishedAt)}</span>
+                    <span suppressHydrationWarning>{formatRelativeTime(item.publishedAt)}</span>
                   </div>
                   <h4 className="mt-1 line-clamp-2 font-serif text-[15px] font-bold text-ink group-hover:text-buletin leading-snug">
                     {item.title}

@@ -56,7 +56,11 @@ export function formatRelativeTime(value: string | null | undefined): string {
   if (diffHours < 24) return `${diffHours} saat önce`;
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays < 7) return `${diffDays} gün önce`;
-  return new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long" }).format(date);
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "numeric",
+    month: "long",
+    timeZone: "Europe/Istanbul",
+  }).format(date);
 }
 
 export function formatFullDateTime(value: string | null | undefined): string {
@@ -69,6 +73,7 @@ export function formatFullDateTime(value: string | null | undefined): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Istanbul",
   }).format(date);
 }
 

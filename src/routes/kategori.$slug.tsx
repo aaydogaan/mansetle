@@ -141,7 +141,7 @@ function CategoryCarousel({ articles }: { articles: LiveArticle[] }) {
               {categoryNames[current.category] ?? current.category}
             </span>
             <span>•</span>
-            <span>{formatRelativeTime(current.publishedAt)}</span>
+            <span suppressHydrationWarning>{formatRelativeTime(current.publishedAt)}</span>
           </div>
 
           <h3 className="mt-3 max-w-3xl font-serif text-[22px] sm:text-[30px] md:text-[36px] font-bold leading-tight text-white group-hover:text-buletin/90">
@@ -286,7 +286,7 @@ function CategoryPage() {
                       <div className="mt-3.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
                         <span className="text-buletin">{categoryNames[article.category] ?? article.category}</span>
                         <span>•</span>
-                        <span>{formatRelativeTime(article.publishedAt)}</span>
+                        <span suppressHydrationWarning>{formatRelativeTime(article.publishedAt)}</span>
                       </div>
                       <h3 className="mt-2 line-clamp-2 font-serif text-[18px] leading-snug font-bold text-ink group-hover:text-buletin">
                         {article.title}

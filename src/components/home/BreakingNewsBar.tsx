@@ -7,9 +7,17 @@ function formatNewsTime(dateString: string | null): string {
   if (!dateString) return "Yeni";
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return "Yeni";
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
+  try {
+    return new Intl.DateTimeFormat("tr-TR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Istanbul",
+    }).format(date);
+  } catch {
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  }
 }
 
 export function BreakingNewsBar({ articles }: { articles: LiveArticle[] }) {
@@ -60,7 +68,10 @@ export function BreakingNewsBar({ articles }: { articles: LiveArticle[] }) {
             params={{ slug: current.slug }}
             className="group hidden sm:flex items-center gap-2.5 overflow-hidden transition-opacity hover:opacity-90"
           >
-            <span className="shrink-0 font-mono text-[12px] font-bold text-buletin">
+            <span
+              suppressHydrationWarning
+              className="shrink-0 font-mono text-[12px] font-bold text-buletin"
+            >
               {timeFormatted}
             </span>
             <span className="shrink-0 text-muted">•</span>
@@ -79,7 +90,10 @@ export function BreakingNewsBar({ articles }: { articles: LiveArticle[] }) {
                   params={{ slug: item.slug }}
                   className="inline-flex items-center gap-2 pr-6 text-[12px] text-ink transition-colors hover:text-buletin"
                 >
-                  <span className="font-mono font-bold text-buletin text-[11px]">
+                  <span
+                    suppressHydrationWarning
+                    className="font-mono font-bold text-buletin text-[11px]"
+                  >
                     {formatNewsTime(item.publishedAt)}
                   </span>
                   <span className="font-medium text-ink">{item.title}</span>
