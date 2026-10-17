@@ -7,6 +7,7 @@ type SourceFeed = { source: string; items: FeedItem[]; error?: string };
 const sources = [
   { id: "trt", name: "TRT Haber", url: "https://www.trthaber.com/" },
   { id: "aa", name: "Anadolu Ajansı", url: "https://www.aa.com.tr/" },
+  { id: "ntv_teknoloji", name: "NTV Teknoloji", url: "https://www.ntv.com.tr/teknoloji" },
 ] as const;
 
 export function SourceFeeds() {

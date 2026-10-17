@@ -196,6 +196,7 @@ function RecepPage() {
         const results = await Promise.all([
           fetch("/api/source-feed/trt", { credentials: "include" }),
           fetch("/api/source-feed/aa", { credentials: "include" }),
+          fetch("/api/source-feed/ntv_teknoloji", { credentials: "include" }),
         ]);
         if (results.some((response) => !response.ok)) throw new Error("Kaynaklardan biri güncellenemedi.");
         await loadQueue("incoming");
