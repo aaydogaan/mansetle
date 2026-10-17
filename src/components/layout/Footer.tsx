@@ -23,7 +23,7 @@ export function Footer() {
               <img
                 src="/logos/mansetle-logo.webp"
                 alt="Mansetle"
-                className="h-9 w-auto object-contain"
+                className="h-10 sm:h-11 md:h-12 w-auto object-contain"
               />
             </Link>
             <p className="mt-4 max-w-[280px] font-serif text-[15px] font-semibold leading-relaxed text-ink/85">

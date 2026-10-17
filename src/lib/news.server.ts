@@ -14,7 +14,7 @@ const selectArticle = `
 
 export async function listPublishedArticles(category?: string, limit = 24): Promise<LiveArticle[]> {
   const sql = await getSql();
-  if (category) {
+  if (category && category !== "son-haberler") {
     return sql.query<LiveArticle>(
       `${selectArticle} AND a.category = $1 ORDER BY a.published_at DESC LIMIT $2`,
       [category, limit],

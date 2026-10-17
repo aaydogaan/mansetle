@@ -19,7 +19,7 @@ export function Header() {
             <img
               src="/logos/mansetle-logo.webp"
               alt="Mansetle"
-              className="h-8.5 w-auto object-contain transition-all"
+              className="h-10 sm:h-11 md:h-12 w-auto object-contain transition-all"
             />
           </Link>
         </div>
@@ -33,6 +33,7 @@ export function Header() {
                 key={link.slug}
                 to="/kategori/$slug"
                 params={{ slug: link.slug }}
+                preload="intent"
                 className={cn(
                   "whitespace-nowrap py-1 transition-colors hover:text-buletin",
                   active ? "border-b-2 border-buletin font-bold text-buletin" : "text-ink/80 hover:text-ink"
@@ -108,6 +109,7 @@ export function Header() {
                   key={link.slug}
                   to="/kategori/$slug"
                   params={{ slug: link.slug }}
+                  preload="intent"
                   className={cn(
                     "rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors",
                     active ? "bg-buletin/10 font-semibold text-buletin" : "text-ink hover:bg-paper"

@@ -7,7 +7,7 @@ export const site = {
 } as const;
 
 export const categoryNames: Record<string, string> = {
-  gundem: "Gündem", turkiye: "Türkiye", dunya: "Dünya", para: "Para", spor: "Spor", teknoloji: "Teknoloji", kultur: "Kültür", yasam: "Yaşam", eglence: "Eğlence",
+  gundem: "Gündem", turkiye: "Türkiye", dunya: "Dünya", para: "Para", spor: "Spor", teknoloji: "Teknoloji", kultur: "Kültür", yasam: "Yaşam", eglence: "Eğlence", "son-haberler": "Son Haberler",
 };
 
 export function absoluteUrl(path = "/") { return new URL(path, site.url).toString(); }

@@ -117,7 +117,7 @@ function ArticlePage() {
           {/* Sol: Ana Haber İçeriği */}
           <div className="lg:col-span-8">
             <span className="inline-block rounded-md bg-buletin/10 px-2.5 py-1 text-xs font-bold text-buletin uppercase tracking-wider">
-              {article.sourceName}
+              {category}
             </span>
 
             <h1 className="mt-4 font-serif text-[32px] leading-[1.2] font-bold text-ink sm:text-[40px] md:text-[46px]">
@@ -196,7 +196,7 @@ function ArticlePage() {
             <div className="rounded-2xl border border-line bg-paper p-5 shadow-xs">
               <div className="flex items-center justify-between border-b border-line pb-3">
                 <h3 className="font-serif text-lg font-bold text-ink">Son Haberler</h3>
-                <Link to="/" className="text-xs font-bold text-buletin hover:underline">
+                <Link to="/kategori/$slug" params={{ slug: "son-haberler" }} className="text-xs font-bold text-buletin hover:underline">
                   Tümü
                 </Link>
               </div>
@@ -225,7 +225,7 @@ function ArticlePage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted">
-                        <span className="text-buletin">{item.sourceName}</span>
+                        <span className="text-buletin">{categoryNames[item.category] ?? item.category}</span>
                         <span>•</span>
                         <span>{formatRelativeTime(item.publishedAt)}</span>
                       </div>
@@ -286,7 +286,7 @@ function ArticlePage() {
                     </div>
                   ) : null}
                   <div className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
-                    <span className="text-buletin">{item.sourceName}</span>
+                    <span className="text-buletin">{categoryNames[item.category] ?? item.category}</span>
                     <span>•</span>
                     <span>{formatRelativeTime(item.publishedAt)}</span>
                   </div>
