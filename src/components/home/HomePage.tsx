@@ -2,26 +2,30 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import type { LiveArticle } from "@/lib/news";
-import { categoryNames } from "@/lib/site";
+import { categoryNames, getArticleImageUrl, DEFAULT_CATEGORY_IMAGES } from "@/lib/site";
 import { estimateReadTime, formatRelativeTime } from "@/lib/utils";
 
 function ArticleImage({ article, className }: { article: LiveArticle; className: string }) {
-  if (!article.imageUrl) {
-    return (
-      <div
-        className={`${className} grid place-items-center bg-gradient-to-br from-buletin/90 via-buletin to-ink p-6 text-center font-serif text-2xl font-bold text-white`}
-      >
-        <span>{categoryNames[article.category] ?? "Mansetle"}</span>
-      </div>
-    );
-  }
+  const initialUrl = getArticleImageUrl(article);
+  const [src, setSrc] = useState(initialUrl);
+
+  useEffect(() => {
+    setSrc(getArticleImageUrl(article));
+  }, [article.imageUrl, article.category]);
+
   return (
     <img
-      src={article.imageUrl}
+      src={src}
       alt={article.title}
       className={className}
       loading="eager"
       referrerPolicy="no-referrer"
+      onError={() => {
+        const fallback = DEFAULT_CATEGORY_IMAGES[article.category] ?? DEFAULT_CATEGORY_IMAGES.gundem;
+        if (src !== fallback) {
+          setSrc(fallback);
+        }
+      }}
     />
   );
 }
@@ -54,7 +58,43 @@ function GridCard({ article }: { article: LiveArticle }) {
   );
 }
 
-// 3-4 Saniyede Bir Dönen Merkez Manşet Kartı (Taylor Swift stili - Hover animasyonsuz, net tasarım)
+// Yan Sütun Haber Kartı (Hem sol hem sağ için 2'şer adet)
+function SideStoryItem({ article }: { article: LiveArticle }) {
+  return (
+    <Link
+      to="/haber/$slug"
+      params={{ slug: article.slug }}
+      className="block w-full"
+    >
+      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-soft">
+        <ArticleImage
+          article={article}
+          className="size-full object-cover"
+        />
+      </div>
+      <div className="mt-2.5 flex items-center gap-2 text-xs font-semibold text-muted">
+        <span className="size-2 rounded-full bg-buletin inline-block shrink-0" />
+        <span className="text-ink font-bold">
+          {categoryNames[article.category] ?? article.category}
+        </span>
+        <span>•</span>
+        <span>{formatRelativeTime(article.publishedAt)}</span>
+      </div>
+      <h4 className="mt-1 font-serif text-[16px] sm:text-[17px] font-bold text-ink leading-snug line-clamp-2">
+        {article.title}
+      </h4>
+      <div className="mt-2 text-xs font-semibold text-muted">
+        <span className="text-buletin font-bold">
+          {categoryNames[article.category] ?? article.category}
+        </span>
+        <span>•</span>
+        <span>{estimateReadTime(article.bodyMarkdown)}</span>
+      </div>
+    </Link>
+  );
+}
+
+// 5 Saniyede Bir Dönen Genişletilmiş Merkez Manşet Kartı (Taylor Swift stili + Dot göstergesi)
 function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -66,7 +106,7 @@ function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
     if (count <= 1 || isPaused) return;
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % count);
-    }, 3500); // 3.5 saniyede bir otomatik geçiş
+    }, 5000); // 5 saniyede bir otomatik geçiş
     return () => clearInterval(interval);
   }, [count, isPaused]);
 
@@ -74,14 +114,14 @@ function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
 
   return (
     <div
-      className="relative size-full"
+      className="relative size-full flex flex-col"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
       <Link
         to="/haber/$slug"
         params={{ slug: current.slug }}
-        className="relative flex h-[520px] w-full flex-col justify-end overflow-hidden rounded-3xl bg-ink p-7 text-white"
+        className="relative flex h-[500px] sm:h-[530px] w-full flex-col justify-end overflow-hidden rounded-3xl bg-ink p-7 sm:p-8 text-white shadow-sm"
       >
         <div className="absolute inset-0">
           <ArticleImage
@@ -101,11 +141,11 @@ function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
             <span>{formatRelativeTime(current.publishedAt)}</span>
           </div>
 
-          <h3 className="mt-3 font-serif text-[24px] sm:text-[27px] leading-snug font-bold text-white line-clamp-3">
+          <h3 className="mt-3 font-serif text-[24px] sm:text-[30px] leading-snug font-bold text-white line-clamp-3">
             {current.title}
           </h3>
 
-          <p className="mt-2.5 text-xs sm:text-sm text-white/80 leading-relaxed line-clamp-3">
+          <p className="mt-2.5 text-xs sm:text-sm text-white/80 leading-relaxed line-clamp-3 max-w-2xl">
             {current.summary}
           </p>
 
@@ -118,6 +158,22 @@ function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
           </div>
         </div>
       </Link>
+
+      {/* 5 Saniye Dots (Alttaki gösterge noktaları) */}
+      {count > 1 ? (
+        <div className="mt-4 flex items-center justify-center gap-2 py-1">
+          {articles.map((item, idx) => (
+            <button
+              key={item.slug}
+              onClick={() => setIndex(idx)}
+              aria-label={`Slayt ${idx + 1}`}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                idx === index ? "w-8 bg-buletin" : "w-2.5 bg-line hover:bg-muted"
+              }`}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -145,36 +201,37 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
   }, [initialArticles]);
 
   // Sayfalama ve Bölüm Paylaşımı
-  // 1. Öne Çıkanlar (Must Read Asimetrik Karusel)
-  const leftStory = items[0]; // Sol dikey kart (Ukrayna tankı stili)
-  const centerRotatingStories = items.slice(1, 6); // Merkez dönen 3-4 sn slider (Taylor Swift stili)
-  const rightStory1 = items[6]; // Sağ üst kart (Qatar stili)
-  const rightStory2 = items[7]; // Sağ alt kart (Wrexham stili)
+  // 1. Öne Çıkanlar (Sol 2 Haber + Orta Geniş 5s Dönen + Sağ 2 Haber)
+  const leftStory1 = items[0];
+  const leftStory2 = items[1];
+  const centerRotatingStories = items.slice(2, 7); // 5 haber, 5 saniyede bir döner
+  const rightStory1 = items[7];
+  const rightStory2 = items[8];
 
   // 2. Son Haberler (4'lü ızgara)
-  const latestNews = items.slice(8, 12);
+  const latestNews = items.slice(9, 13);
 
   // 3. Editörün Seçimi
-  const editorsPick = items[12];
-  const editorsGrid = items.slice(13, 17);
+  const editorsPick = items[13];
+  const editorsGrid = items.slice(14, 18);
 
   // 4. Kategori İkilileri
   const gundemEkonomiPool = items.filter((a) =>
     ["gundem", "turkiye", "para"].includes(a.category)
   );
   const catLeft = (
-    gundemEkonomiPool.length >= 2 ? gundemEkonomiPool : items.slice(17, 19)
+    gundemEkonomiPool.length >= 2 ? gundemEkonomiPool : items.slice(18, 20)
   ).slice(0, 2);
 
   const sporTeknolojiPool = items.filter((a) =>
     ["spor", "teknoloji"].includes(a.category)
   );
   const catRight = (
-    sporTeknolojiPool.length >= 2 ? sporTeknolojiPool : items.slice(19, 21)
+    sporTeknolojiPool.length >= 2 ? sporTeknolojiPool : items.slice(20, 22)
   ).slice(0, 2);
 
   // 5. Kalan Gelişmeler
-  const moreNews = items.slice(21, 33);
+  const moreNews = items.slice(22, 34);
 
   return (
     <div className="pb-16 md:pb-24">
@@ -194,7 +251,7 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
         </section>
       ) : (
         <>
-          {/* 1. Sitenin En Üstü: Must Read / Öne Çıkanlar Karuseli (Ekran Görüntüsü ile Birebir) */}
+          {/* 1. Sitenin En Üstü: Must Read / Öne Çıkanlar (Sol 2 Haber + Orta Geniş 5s Dönen + Sağ 2 Haber) */}
           <section className="container-buletin pt-6 md:pt-8">
             <div className="mb-7 flex items-center justify-between">
               <h2 className="font-serif text-[28px] font-bold text-ink sm:text-[34px]">
@@ -210,118 +267,22 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
               </Link>
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-12 items-start">
-              {/* Sol Sütun: Dikey Görsel & Başlık (Kutusuz, Çerçevesiz, Doğrudan Zemin Üzerinde) */}
-              {leftStory ? (
-                <div className="lg:col-span-4">
-                  <Link
-                    to="/haber/$slug"
-                    params={{ slug: leftStory.slug }}
-                    className="block w-full"
-                  >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-soft">
-                      <ArticleImage
-                        article={leftStory}
-                        className="size-full object-cover"
-                      />
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-muted">
-                      <span className="size-2 rounded-full bg-buletin inline-block shrink-0" />
-                      <span className="text-ink font-bold">
-                        {categoryNames[leftStory.category] ?? leftStory.category}
-                      </span>
-                      <span>•</span>
-                      <span>{formatRelativeTime(leftStory.publishedAt)}</span>
-                    </div>
-                    <h3 className="mt-2.5 font-serif text-[21px] sm:text-[23px] font-bold text-ink leading-snug line-clamp-3">
-                      {leftStory.title}
-                    </h3>
-                    <p className="mt-2.5 text-xs sm:text-sm text-muted leading-relaxed line-clamp-3">
-                      {leftStory.summary}
-                    </p>
-                    <div className="mt-3.5 flex items-center gap-2 text-xs font-semibold text-muted">
-                      <span className="text-buletin font-bold">
-                        {categoryNames[leftStory.category] ?? leftStory.category}
-                      </span>
-                      <span>•</span>
-                      <span>{estimateReadTime(leftStory.bodyMarkdown)}</span>
-                    </div>
-                  </Link>
-                </div>
-              ) : null}
+            <div className="grid gap-7 lg:grid-cols-12 items-start">
+              {/* Sol Sütun: 2 Adet Haber (Görsel üstte, kutusuz/çerçevesiz zemin üstünde) */}
+              <div className="space-y-7 lg:col-span-3">
+                {leftStory1 ? <SideStoryItem article={leftStory1} /> : null}
+                {leftStory2 ? <SideStoryItem article={leftStory2} /> : null}
+              </div>
 
-              {/* Merkez Sütun: 3-4 Saniyede Bir Dönen Büyük Kart (Taylor Swift Stili) */}
-              <div className="lg:col-span-4">
+              {/* Merkez Sütun: Yatay Olarak Genişleyen 5 Saniyede Bir Dönen Manşet (lg:col-span-6) */}
+              <div className="lg:col-span-6">
                 <CenterRotatingCard articles={centerRotatingStories} />
               </div>
 
-              {/* Sağ Sütun: 2 Adet Görseli Üstte Haber (Kutusuz, Çerçevesiz, Doğrudan Zemin Üzerinde) */}
-              <div className="space-y-7 lg:col-span-4">
-                {rightStory1 ? (
-                  <Link
-                    to="/haber/$slug"
-                    params={{ slug: rightStory1.slug }}
-                    className="block w-full"
-                  >
-                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-soft">
-                      <ArticleImage
-                        article={rightStory1}
-                        className="size-full object-cover"
-                      />
-                    </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">
-                      <span className="size-2 rounded-full bg-buletin inline-block shrink-0" />
-                      <span className="text-ink font-bold">
-                        {categoryNames[rightStory1.category] ?? rightStory1.category}
-                      </span>
-                      <span>•</span>
-                      <span>{formatRelativeTime(rightStory1.publishedAt)}</span>
-                    </div>
-                    <h4 className="mt-1.5 font-serif text-[17px] sm:text-[18px] font-bold text-ink leading-snug line-clamp-2">
-                      {rightStory1.title}
-                    </h4>
-                    <div className="mt-2 text-xs font-semibold text-muted">
-                      <span className="text-buletin font-bold">
-                        {categoryNames[rightStory1.category] ?? rightStory1.category}
-                      </span>
-                      <span>•</span>
-                      <span>{estimateReadTime(rightStory1.bodyMarkdown)}</span>
-                    </div>
-                  </Link>
-                ) : null}
-
-                {rightStory2 ? (
-                  <Link
-                    to="/haber/$slug"
-                    params={{ slug: rightStory2.slug }}
-                    className="block w-full"
-                  >
-                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-soft">
-                      <ArticleImage
-                        article={rightStory2}
-                        className="size-full object-cover"
-                      />
-                    </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">
-                      <span className="size-2 rounded-full bg-buletin inline-block shrink-0" />
-                      <span className="text-ink font-bold">
-                        {categoryNames[rightStory2.category] ?? rightStory2.category}
-                      </span>
-                      <span>•</span>
-                      <span>{formatRelativeTime(rightStory2.publishedAt)}</span>
-                    </div>
-                    <h4 className="mt-1.5 font-serif text-[17px] sm:text-[18px] font-bold text-ink leading-snug line-clamp-2">
-                      {rightStory2.title}
-                    </h4>
-                    <div className="mt-2 text-xs font-semibold text-muted">
-                      <span className="text-buletin font-bold">
-                        {categoryNames[rightStory2.category] ?? rightStory2.category}
-                      </span>
-                      <span>•</span>
-                      <span>{estimateReadTime(rightStory2.bodyMarkdown)}</span>
-                    </div>
-                  </Link>
-                ) : null}
+              {/* Sağ Sütun: 2 Adet Haber (Görsel üstte, kutusuz/çerçevesiz zemin üstünde) */}
+              <div className="space-y-7 lg:col-span-3">
+                {rightStory1 ? <SideStoryItem article={rightStory1} /> : null}
+                {rightStory2 ? <SideStoryItem article={rightStory2} /> : null}
               </div>
             </div>
           </section>

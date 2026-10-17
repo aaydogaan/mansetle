@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { categoryNames, pageTitle, seoHead } from "@/lib/site";
+import { categoryNames, pageTitle, seoHead, getArticleImageUrl, DEFAULT_CATEGORY_IMAGES } from "@/lib/site";
 import { getPublishedArticles } from "@/lib/news.functions";
 import type { LiveArticle } from "@/lib/news";
 import { estimateReadTime, formatRelativeTime } from "@/lib/utils";
@@ -27,22 +27,26 @@ export const Route = createFileRoute("/kategori/$slug")({
 });
 
 function ArticleImage({ article, className }: { article: LiveArticle; className: string }) {
-  if (!article.imageUrl) {
-    return (
-      <div
-        className={`${className} grid place-items-center bg-gradient-to-br from-buletin/90 via-buletin to-ink p-6 text-center font-serif text-xl font-bold text-white`}
-      >
-        <span>{categoryNames[article.category] ?? "Mansetle"}</span>
-      </div>
-    );
-  }
+  const initialUrl = getArticleImageUrl(article);
+  const [src, setSrc] = useState(initialUrl);
+
+  useEffect(() => {
+    setSrc(getArticleImageUrl(article));
+  }, [article.imageUrl, article.category]);
+
   return (
     <img
-      src={article.imageUrl}
+      src={src}
       alt={article.title}
       className={className}
       loading="eager"
       referrerPolicy="no-referrer"
+      onError={() => {
+        const fallback = DEFAULT_CATEGORY_IMAGES[article.category] ?? DEFAULT_CATEGORY_IMAGES.gundem;
+        if (src !== fallback) {
+          setSrc(fallback);
+        }
+      }}
     />
   );
 }
