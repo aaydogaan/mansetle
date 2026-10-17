@@ -2,35 +2,6 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { SuperLigData } from "@/lib/superlig.server";
 
-// Resmi Kulüp Logoları (Yerel ve Hızlı)
-const TEAM_LOGOS: Record<string, string> = {
-  Galatasaray: "/logos/teams/galatasaray.png",
-  "Amed SK": "/logos/teams/amed_sk.png",
-  Beşiktaş: "/logos/teams/besiktas.png",
-  Fenerbahçe: "/logos/teams/fenerbahce.png",
-  Trabzonspor: "/logos/teams/trabzonspor.png",
-  "Çorum FK": "/logos/teams/corum_fk.png",
-  "Arca Çorum FK": "/logos/teams/corum_fk.png",
-  Alanyaspor: "/logos/teams/alanyaspor.png",
-  "Corendon Alanyaspor": "/logos/teams/alanyaspor.png",
-  Kocaelispor: "/logos/teams/kocaelispor.png",
-  "Erzurumspor FK": "/logos/teams/erzurumspor_fk.png",
-  Erzurumspor: "/logos/teams/erzurumspor_fk.png",
-  Kasımpaşa: "/logos/teams/kasimpasa.png",
-  "Ç. Rizespor": "/logos/teams/caykur_rizespor.png",
-  "Çaykur Rizespor": "/logos/teams/caykur_rizespor.png",
-  Başakşehir: "/logos/teams/basaksehir.png",
-  "Rams Başakşehir": "/logos/teams/basaksehir.png",
-  "Gaziantep FK": "/logos/teams/gaziantep_fk.png",
-  Gençlerbirliği: "/logos/teams/genclerbirligi.png",
-  Göztepe: "/logos/teams/goztepe.png",
-  Konyaspor: "/logos/teams/konyaspor.png",
-  "Tümosan Konyaspor": "/logos/teams/konyaspor.png",
-  Samsunspor: "/logos/teams/samsunspor.png",
-  Eyüpspor: "/logos/teams/eyupspor.png",
-  "İkas Eyüpspor": "/logos/teams/eyupspor.png",
-};
-
 export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
   const [activeTab, setActiveTab] = useState<"standings" | "fixtures">("standings");
   const [showAll, setShowAll] = useState(false);
@@ -43,10 +14,9 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-paper shadow-2xs">
-      {/* Üst Başlık & Sekmeler (Gerçek Spor Portalı Stili) */}
+      {/* Üst Başlık & Sekmeler */}
       <div className="border-b border-line px-4 py-3 sm:px-5 bg-surface/50">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Başlık (Trendyol WebP logosu kaldırıldı, gerçek spor portalları gibi temiz tipografi) */}
           <div>
             <h3 className="font-sans text-[13px] sm:text-[14px] font-black uppercase tracking-wider text-ink">
               TRENDYOL SÜPER LİG
@@ -86,13 +56,13 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
 
       {/* İçerik Alanı */}
       <div className="p-2.5 sm:p-4">
-        {/* 1. Puan Durumu Sekmesi (Mackolik / Resim 2 Birebir Tasarım) */}
+        {/* 1. Puan Durumu Sekmesi */}
         {activeTab === "standings" && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-sans border-collapse">
               <thead>
                 <tr className="bg-soft/80 text-[11px] font-bold text-muted border-b border-line">
-                  <th className="py-2 pl-3 w-7 text-center">#</th>
+                  <th className="py-2 pl-3 w-8 text-center">#</th>
                   <th className="py-2 pl-2">TAKIM</th>
                   <th className="py-2 px-1 text-center w-7">O</th>
                   <th className="py-2 px-1 text-center w-7 hidden sm:table-cell">G</th>
@@ -106,26 +76,10 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
               </thead>
               <tbody className="divide-y divide-line/40">
                 {displayedStandings.map((team) => {
-                  const logo = TEAM_LOGOS[team.shortName] ?? TEAM_LOGOS[team.team];
-
-                  // Sol kenar Avrupa / Düşme çizgisi
-                  let borderLeftClass = "border-l-[3px] border-l-transparent";
-                  if (team.position === 1) {
-                    borderLeftClass = "border-l-[3px] border-l-emerald-500";
-                  } else if (team.position === 2) {
-                    borderLeftClass = "border-l-[3px] border-l-blue-500";
-                  } else if (team.position === 3) {
-                    borderLeftClass = "border-l-[3px] border-l-amber-500";
-                  } else if (team.position === 4) {
-                    borderLeftClass = "border-l-[3px] border-l-cyan-400";
-                  } else if (team.position >= 16) {
-                    borderLeftClass = "border-l-[3px] border-l-rose-500";
-                  }
-
                   return (
                     <tr
                       key={team.position}
-                      className={`group transition-colors hover:bg-soft/50 ${borderLeftClass}`}
+                      className="group transition-colors hover:bg-soft/50"
                     >
                       {/* Sıra & Trend Oku */}
                       <td className="py-2 pl-2 text-center text-xs font-semibold text-muted">
@@ -139,23 +93,11 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
                         </div>
                       </td>
 
-                      {/* Takım Logosu & Adı (Renkli noktalar kaldırıldı, gerçek arma eklendi) */}
+                      {/* Takım Adı (Sade, logosuz, net tipografi) */}
                       <td className="py-2 pl-2 font-medium text-ink">
-                        <div className="flex items-center gap-2 truncate max-w-[130px] sm:max-w-none">
-                          {logo ? (
-                            <img
-                              src={logo}
-                              alt=""
-                              className="size-4.5 sm:size-5 object-contain shrink-0"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <span className="size-4.5 rounded-full bg-soft shrink-0" />
-                          )}
-                          <span className="truncate text-xs font-semibold text-ink">
-                            {team.shortName}
-                          </span>
-                        </div>
+                        <span className="truncate text-xs font-semibold text-ink">
+                          {team.shortName}
+                        </span>
                       </td>
 
                       <td className="py-2 px-1 text-center text-muted">{team.played}</td>
@@ -165,7 +107,7 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
                       <td className="py-2 px-1 text-center text-muted hidden md:table-cell">{team.goals_for}</td>
                       <td className="py-2 px-1 text-center text-muted hidden md:table-cell">{team.goals_against}</td>
                       <td className="py-2 px-1 text-center text-muted font-medium">
-                        {team.goal_difference > 0 ? team.goal_difference : team.goal_difference}
+                        {team.goal_difference}
                       </td>
                       <td className="py-2 pr-3 text-center font-black text-ink text-[13px]">
                         {team.points}
@@ -176,29 +118,21 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
               </tbody>
             </table>
 
-            {/* Genişlet / Kısalt Butonu */}
-            <div className="mt-3 flex items-center justify-between border-t border-line/70 pt-2.5 px-2 text-[11px] text-muted">
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-emerald-500 inline-block" /> Şampiyonlar Ligi
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-rose-500 inline-block" /> Düşme Hattı
-                </span>
-              </div>
+            {/* Genişlet / Kısalt Butonu (İnce, zarif) */}
+            <div className="mt-3 flex items-center justify-center border-t border-line/60 pt-2.5 px-2">
               <button
                 type="button"
                 onClick={() => setShowAll((prev) => !prev)}
-                className="flex items-center gap-1 font-bold text-buletin hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-normal text-muted hover:text-ink transition-colors cursor-pointer py-1 px-3 rounded-md hover:bg-soft"
               >
                 {showAll ? (
                   <>
-                    <span>Daha Az Göster</span>
+                    <span>Daha az göster</span>
                     <ChevronUp className="size-3.5" />
                   </>
                 ) : (
                   <>
-                    <span>Tüm Tabloyu Gör ({data.standings.length})</span>
+                    <span>Tüm tabloyu gör ({data.standings.length})</span>
                     <ChevronDown className="size-3.5" />
                   </>
                 )}
@@ -207,13 +141,10 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
           </div>
         )}
 
-        {/* 2. 8. Hafta Fikstürü Sekmesi (Renkli noktalar kaldırıldı, gerçek kulüp armaları yerleştirildi) */}
+        {/* 2. 8. Hafta Fikstürü Sekmesi */}
         {activeTab === "fixtures" && (
           <div className="space-y-2">
             {data.fixtures.map((match) => {
-              const homeLogo = TEAM_LOGOS[match.homeTeam];
-              const awayLogo = TEAM_LOGOS[match.awayTeam];
-
               return (
                 <div
                   key={match.id}
@@ -221,17 +152,9 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
                     match.isDerby ? "border-buletin/40 bg-buletin/5" : ""
                   }`}
                 >
-                  {/* Ev Sahibi (Takım Adı + Gerçek Kulüp Arması, Renkli Nokta Yok) */}
-                  <div className="w-[38%] font-semibold text-ink text-right truncate flex items-center justify-end gap-2">
+                  {/* Ev Sahibi */}
+                  <div className="w-[38%] font-semibold text-ink text-right truncate">
                     <span className="truncate text-xs">{match.homeTeam}</span>
-                    {homeLogo ? (
-                      <img
-                        src={homeLogo}
-                        alt=""
-                        className="size-4.5 sm:size-5 object-contain shrink-0"
-                        loading="lazy"
-                      />
-                    ) : null}
                   </div>
 
                   {/* Skor / Saat Alanı */}
@@ -255,16 +178,8 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
                     )}
                   </div>
 
-                  {/* Deplasman (Gerçek Kulüp Arması + Takım Adı, Renkli Nokta Yok) */}
-                  <div className="w-[38%] font-semibold text-ink text-left truncate flex items-center gap-2">
-                    {awayLogo ? (
-                      <img
-                        src={awayLogo}
-                        alt=""
-                        className="size-4.5 sm:size-5 object-contain shrink-0"
-                        loading="lazy"
-                      />
-                    ) : null}
+                  {/* Deplasman */}
+                  <div className="w-[38%] font-semibold text-ink text-left truncate">
                     <span className="truncate text-xs">{match.awayTeam}</span>
                   </div>
 
@@ -283,3 +198,4 @@ export function SuperLigWidget({ data }: { data?: SuperLigData | null }) {
     </div>
   );
 }
+
