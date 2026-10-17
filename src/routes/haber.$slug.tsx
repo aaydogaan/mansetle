@@ -64,6 +64,15 @@ function articleSchema(article: LiveArticle) {
   }).replace(/</g, "\\u003c");
 }
 
+function getPhotoCredit(article: LiveArticle): string {
+  if (article.imageMode === "ai") return "Mansetle / Yapay Zeka";
+  const src = article.sourceName?.trim();
+  if (!src) return "Mansetle";
+  if (/anadolu|aa/i.test(src)) return "AA";
+  if (/trt/i.test(src)) return "TRT Haber";
+  return src;
+}
+
 function ArticlePage() {
   const { article, latest, related } = Route.useLoaderData();
   const [copied, setCopied] = useState(false);
@@ -154,16 +163,21 @@ function ArticlePage() {
               {article.summary}
             </p>
 
-            {/* Kapak Görseli */}
+            {/* Kapak Görseli ve Fotoğraf Kaynağı */}
             {article.imageUrl ? (
-              <figure className="mt-7 overflow-hidden rounded-2xl border border-line bg-soft shadow-xs">
-                <img
-                  src={article.imageUrl}
-                  alt={article.title}
-                  className="aspect-video w-full object-cover"
-                  loading="eager"
-                  referrerPolicy="no-referrer"
-                />
+              <figure className="mt-7">
+                <div className="overflow-hidden rounded-2xl border border-line bg-soft shadow-xs">
+                  <img
+                    src={article.imageUrl}
+                    alt={article.title}
+                    className="aspect-video w-full object-cover"
+                    loading="eager"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <figcaption className="mt-2 text-[12px] font-normal text-muted">
+                  [Fotoğraf: {getPhotoCredit(article)}]
+                </figcaption>
               </figure>
             ) : null}
 
