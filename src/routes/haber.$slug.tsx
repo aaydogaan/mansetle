@@ -1,32 +1,24 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, ChevronRight, Clock, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink } from "lucide-react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { getPublishedArticle, getPublishedArticles } from "@/lib/news.functions";
 import type { LiveArticle } from "@/lib/news";
 import { absoluteUrl, categoryNames, pageTitle, seoHead, site, trimDescription } from "@/lib/site";
 import { estimateReadTime, formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 
-const TOP_SIDEBAR_CATEGORIES = [
-  { slug: "gundem", name: "Gündem", color: "bg-red-500" },
-  { slug: "para", name: "Ekonomi", color: "bg-emerald-500" },
-  { slug: "spor", name: "Spor", color: "bg-blue-500" },
-  { slug: "teknoloji", name: "Teknoloji", color: "bg-cyan-500" },
-  { slug: "dunya", name: "Dünya", color: "bg-purple-500" },
-];
-
 export const Route = createFileRoute("/haber/$slug")({
   loader: async ({ params }) => {
     try {
       const [article, allArticles] = await Promise.all([
         getPublishedArticle({ data: { slug: params.slug } }),
-        getPublishedArticles({ data: { limit: 10 } }),
+        getPublishedArticles({ data: { limit: 12 } }),
       ]);
       const otherArticles = allArticles.filter((item) => item.slug !== params.slug);
-      return { article, latest: otherArticles.slice(0, 5), related: otherArticles.slice(5, 8) };
+      return { article, topStories: otherArticles.slice(0, 4), related: otherArticles.slice(4, 7) };
     } catch (error) {
       console.error("[article] could not load published article", error);
-      return { article: null, latest: [], related: [] };
+      return { article: null, topStories: [], related: [] };
     }
   },
   head: ({ loaderData }) => {
@@ -58,7 +50,7 @@ function articleSchema(article: LiveArticle) {
       "@type": "Organization",
       name: site.name,
       url: site.url,
-      logo: { "@type": "ImageObject", url: absoluteUrl("/mansetle-fav.png") },
+      logo: { "@type": "ImageObject", url: absoluteUrl("/logos/mansetle-logo.webp") },
     },
     isBasedOn: article.sourceUrl,
   }).replace(/</g, "\\u003c");
@@ -73,8 +65,24 @@ function getPhotoCredit(article: LiveArticle): string {
   return src;
 }
 
+function FacebookIcon({ className = "size-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  );
+}
+
+function TwitterIcon({ className = "size-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
+
 function ArticlePage() {
-  const { article, latest, related } = Route.useLoaderData();
+  const { article, topStories } = Route.useLoaderData();
   const [copied, setCopied] = useState(false);
 
   if (!article) {
@@ -110,7 +118,7 @@ function ArticlePage() {
       <article className="container-buletin py-8 md:py-12">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: articleSchema(article) }} />
 
-        {/* Üst Kategori & Breadcrumb */}
+        {/* 1. Üst Kategori & Breadcrumb */}
         <div className="flex items-center gap-2 text-xs font-semibold text-muted">
           <Link to="/" className="hover:text-buletin">
             Ana Sayfa
@@ -121,51 +129,72 @@ function ArticlePage() {
           </Link>
         </div>
 
-        {/* Ana İçerik ve Yan Sidebar Grid */}
-        <div className="mt-6 grid gap-10 lg:grid-cols-12">
-          {/* Sol: Ana Haber İçeriği */}
-          <div className="lg:col-span-8">
-            <span className="inline-block rounded-md bg-buletin/10 px-2.5 py-1 text-xs font-bold text-buletin uppercase tracking-wider">
-              {category}
-            </span>
+        {/* 2. Ana Başlık */}
+        <h1 className="mt-4 font-serif text-[32px] leading-[1.18] font-bold text-ink sm:text-[40px] md:text-[46px] max-w-4xl">
+          {article.title}
+        </h1>
 
-            <h1 className="mt-4 font-serif text-[32px] leading-[1.2] font-bold text-ink sm:text-[40px] md:text-[46px]">
-              {article.title}
-            </h1>
-
-            {/* Tarih, Saat ve Okuma Süresi */}
-            <div className="mt-5 flex flex-wrap items-center gap-3 border-y border-line py-3.5 text-xs font-medium text-muted">
-              <div className="flex items-center gap-1.5 text-ink">
-                <Clock className="size-3.5 text-buletin" />
-                <time dateTime={article.publishedAt ?? undefined}>
-                  {formatFullDateTime(article.publishedAt)}
-                </time>
-              </div>
+        {/* 3. Mansetle Profili & Paylaşım Çubuğu (Ekran Görüntüsü Tasarımı) */}
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-y border-line py-3.5 text-xs">
+          {/* Sol: Mansetle Profil Avatarlı Byline */}
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-ink text-white font-serif font-bold text-sm shadow-2xs">
+              <span className="font-bold tracking-tight text-white">M</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-muted">
+              <span className="font-bold text-ink">Mansetle Editörü</span>
+              <span>•</span>
+              <time dateTime={article.publishedAt ?? undefined}>
+                {formatFullDateTime(article.publishedAt)}
+              </time>
+              <span>•</span>
+              <span className="font-bold text-buletin">{category}</span>
               <span>•</span>
               <span>{estimateReadTime(article.bodyMarkdown)}</span>
-              <span>•</span>
-              <span className="text-muted">{formatRelativeTime(article.publishedAt)}</span>
-
-              <div className="ml-auto flex items-center gap-2">
-                <button
-                  onClick={copyUrl}
-                  title="Bağlantıyı kopyala"
-                  className="inline-flex items-center gap-1 rounded-md border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-ink hover:border-buletin"
-                >
-                  {copied ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
-                  {copied ? "Kopyalandı" : "Paylaş"}
-                </button>
-              </div>
             </div>
+          </div>
 
-            {/* Özet Giriş Paragrafı */}
-            <p className="mt-6 text-lg font-medium leading-relaxed text-muted sm:text-xl">
-              {article.summary}
-            </p>
+          {/* Sağ: Paylaşım Butonları (X, Facebook, Kopyala) */}
+          <div className="flex items-center gap-2 text-muted">
+            <span className="font-semibold text-xs text-ink/75">Paylaş:</span>
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(pageUrl)}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="X'te Paylaş"
+              title="X'te Paylaş"
+              className="flex size-8 items-center justify-center rounded-full border border-line bg-paper text-ink transition hover:border-buletin hover:text-buletin shadow-2xs"
+            >
+              <TwitterIcon className="size-3.5" />
+            </a>
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Facebook'ta Paylaş"
+              title="Facebook'ta Paylaş"
+              className="flex size-8 items-center justify-center rounded-full border border-line bg-paper text-ink transition hover:border-buletin hover:text-buletin shadow-2xs"
+            >
+              <FacebookIcon className="size-3.5" />
+            </a>
+            <button
+              onClick={copyUrl}
+              aria-label="Bağlantıyı kopyala"
+              title="Bağlantıyı kopyala"
+              className="flex size-8 items-center justify-center rounded-full border border-line bg-paper text-ink transition hover:border-buletin hover:text-buletin shadow-2xs"
+            >
+              {copied ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+            </button>
+          </div>
+        </div>
 
+        {/* 4. Ana İçerik ve Sağ Sidebar Grid */}
+        <div className="mt-8 grid gap-12 lg:grid-cols-12 items-start">
+          {/* Sol: Ana Haber İçeriği */}
+          <div className="lg:col-span-8">
             {/* Kapak Görseli ve Fotoğraf Kaynağı */}
             {article.imageUrl ? (
-              <figure className="mt-7">
+              <figure className="mb-8">
                 <div className="overflow-hidden rounded-2xl border border-line bg-soft shadow-xs">
                   <img
                     src={article.imageUrl}
@@ -181,13 +210,31 @@ function ArticlePage() {
               </figure>
             ) : null}
 
+            {/* Özet Giriş Paragrafı (Lead Paragraph) */}
+            <p className="text-lg sm:text-xl font-medium leading-relaxed text-ink/90">
+              {article.summary}
+            </p>
+
             {/* Gövde Metni */}
-            <div className="mt-8 space-y-6 text-[17px] leading-[1.85] text-ink/90">
-              {article.bodyMarkdown.split(/\n{2,}/).map((paragraph, index) => (
-                <p key={index} className="break-words">
-                  {paragraph}
-                </p>
-              ))}
+            <div className="mt-6 space-y-6 text-[17px] leading-[1.85] text-ink/90">
+              {article.bodyMarkdown.split(/\n{2,}/).map((paragraph, index) => {
+                // Özel alıntı vurgusu için ilk uzun paragraftan sonra şık alıntı bloğu ekleme desteği
+                if (index === 2 && paragraph.length > 80) {
+                  return (
+                    <blockquote
+                      key={index}
+                      className="my-6 border-l-4 border-buletin pl-4 font-serif text-[18px] sm:text-[19px] italic font-semibold text-ink leading-relaxed"
+                    >
+                      "{paragraph}"
+                    </blockquote>
+                  );
+                }
+                return (
+                  <p key={index} className="break-words">
+                    {paragraph}
+                  </p>
+                );
+              })}
             </div>
 
             {/* Alt Kısım: Sadece Kaynak */}
@@ -204,117 +251,58 @@ function ArticlePage() {
             </div>
           </div>
 
-          {/* Sağ: Şık Yan Menü (Sidebar) */}
-          <aside className="space-y-8 lg:col-span-4">
-            {/* Son Haberler Widget */}
-            <div className="rounded-2xl border border-line bg-paper p-5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-line pb-3">
-                <h3 className="font-serif text-lg font-bold text-ink">Son Haberler</h3>
-                <Link to="/kategori/$slug" params={{ slug: "son-haberler" }} className="text-xs font-bold text-buletin hover:underline">
-                  Tümü
-                </Link>
-              </div>
-
-              <div className="mt-4 divide-y divide-line/70">
-                {latest.map((item) => (
-                  <Link
-                    key={item.slug}
-                    to="/haber/$slug"
-                    params={{ slug: item.slug }}
-                    className="group flex gap-3 py-3.5 first:pt-0 last:pb-0"
-                  >
-                    {item.imageUrl ? (
-                      <div className="size-16 shrink-0 overflow-hidden rounded-xl border border-line bg-soft">
-                        <img
-                          src={item.imageUrl}
-                          alt=""
-                          referrerPolicy="no-referrer"
-                          className="size-full object-cover transition-transform group-hover:scale-105"
-                        />
-                      </div>
-                    ) : (
-                      <div className="grid size-16 shrink-0 place-items-center rounded-xl bg-buletin/10 text-xs font-bold text-buletin">
-                        {item.category.slice(0, 3).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted">
-                        <span className="text-buletin">{categoryNames[item.category] ?? item.category}</span>
-                        <span>•</span>
-                        <span>{formatRelativeTime(item.publishedAt)}</span>
-                      </div>
-                      <h4 className="mt-1 line-clamp-2 font-serif text-sm font-bold text-ink group-hover:text-buletin">
-                        {item.title}
-                      </h4>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+          {/* Sağ: Şık Yan Menü (Top Stories / Son Haberler - Kategoriler kaldırıldı) */}
+          <aside className="space-y-6 lg:col-span-4 sticky top-24">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <h3 className="font-serif text-2xl font-bold text-ink">Son Haberler</h3>
+              <Link
+                to="/kategori/$slug"
+                params={{ slug: "son-haberler" }}
+                className="text-xs font-bold text-buletin hover:underline"
+              >
+                Tümü
+              </Link>
             </div>
 
-            {/* Kategoriler Widget - Şık ve Alt Alta 5 Kategori */}
-            <div className="rounded-2xl border border-line bg-paper p-5 shadow-xs">
-              <h3 className="border-b border-line pb-3 font-serif text-lg font-bold text-ink">
-                Kategoriler
-              </h3>
-              <div className="mt-3 divide-y divide-line/60">
-                {TOP_SIDEBAR_CATEGORIES.map(({ slug, name, color }) => (
-                  <Link
-                    key={slug}
-                    to="/kategori/$slug"
-                    params={{ slug }}
-                    className="group flex items-center justify-between py-3 text-sm font-semibold text-ink transition hover:text-buletin"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className={`size-2 rounded-full ${color}`} />
-                      <span>{name}</span>
-                    </div>
-                    <ChevronRight className="size-4 text-muted transition-transform group-hover:translate-x-1 group-hover:text-buletin" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </aside>
-        </div>
-
-        {/* Alt Kısım: İlginizi Çekebilir (Önerilen Haberler) */}
-        {related && related.length > 0 ? (
-          <div className="mt-16 border-t border-line pt-10 md:mt-20">
-            <h2 className="font-serif text-2xl font-bold text-ink">İlginizi Çekebilir</h2>
-            <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {related.map((item) => (
+            {/* Ekran Görüntüsündeki gibi Görseli Üstte Temiz Kartlar */}
+            <div className="space-y-5">
+              {topStories.map((item) => (
                 <Link
                   key={item.slug}
                   to="/haber/$slug"
                   params={{ slug: item.slug }}
-                  className="group block rounded-2xl border border-line bg-paper p-4 transition hover:-translate-y-1 hover:border-buletin/40"
+                  className="group flex flex-col rounded-2xl border border-line bg-paper p-3.5 transition hover:border-buletin/40 shadow-2xs"
                 >
                   {item.imageUrl ? (
-                    <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border border-line bg-soft">
+                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-line bg-soft">
                       <img
                         src={item.imageUrl}
                         alt=""
                         referrerPolicy="no-referrer"
-                        className="size-full object-cover transition-transform group-hover:scale-105"
+                        className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
                   ) : null}
-                  <div className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
-                    <span className="text-buletin">{categoryNames[item.category] ?? item.category}</span>
+                  <div className="mt-2.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
+                    <span className="text-buletin font-bold">
+                      {categoryNames[item.category] ?? item.category}
+                    </span>
                     <span>•</span>
                     <span>{formatRelativeTime(item.publishedAt)}</span>
                   </div>
-                  <h3 className="mt-2 line-clamp-2 font-serif text-base font-bold text-ink group-hover:text-buletin">
+                  <h4 className="mt-1 line-clamp-2 font-serif text-[15px] font-bold text-ink group-hover:text-buletin leading-snug">
                     {item.title}
-                  </h3>
-                  <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted">
-                    {item.summary}
-                  </p>
+                  </h4>
+                  <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-muted">
+                    <span className="text-buletin">{categoryNames[item.category] ?? item.category}</span>
+                    <span>•</span>
+                    <span>{estimateReadTime(item.bodyMarkdown)}</span>
+                  </div>
                 </Link>
               ))}
             </div>
-          </div>
-        ) : null}
+          </aside>
+        </div>
       </article>
     </SiteShell>
   );
