@@ -138,7 +138,7 @@ function ArticlePage() {
         <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-y border-line py-3.5 text-xs">
           {/* Sol: Mansetle Profil Avatarlı Byline */}
           <div className="flex items-center gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-ink text-white font-serif font-bold text-sm shadow-2xs">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-buletin text-white font-serif font-bold text-sm shadow-xs select-none">
               <span className="font-bold tracking-tight text-white">M</span>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-muted">
