@@ -53,22 +53,41 @@ export function BreakingNewsBar({ articles }: { articles: LiveArticle[] }) {
         </div>
 
         {/* Ticker / Haber Akışı */}
-        <div className="relative flex-1 overflow-hidden px-3 sm:px-4 py-2 text-[13px] sm:text-[14px]">
+        <div className="relative flex-1 overflow-hidden px-2 sm:px-4 py-2 text-[13px] sm:text-[14px]">
+          {/* Masaüstü: Tekil döngüsel haber */}
           <Link
             to="/haber/$slug"
             params={{ slug: current.slug }}
-            className="group flex items-center gap-2.5 overflow-hidden transition-opacity hover:opacity-90"
+            className="group hidden sm:flex items-center gap-2.5 overflow-hidden transition-opacity hover:opacity-90"
           >
-            {/* Saat Rozeti (Kırmızı vurgulu) */}
-            <span className="shrink-0 font-mono text-[11px] sm:text-[12px] font-bold text-buletin">
+            <span className="shrink-0 font-mono text-[12px] font-bold text-buletin">
               {timeFormatted}
             </span>
-            <span className="shrink-0 text-muted hidden sm:inline">•</span>
-            {/* Haber Başlığı */}
+            <span className="shrink-0 text-muted">•</span>
             <span className="truncate font-medium text-ink group-hover:text-buletin transition-colors">
               {current.title}
             </span>
           </Link>
+
+          {/* Mobil: Sürekli kayan akıcı bant (Marquee) */}
+          <div className="sm:hidden relative overflow-hidden flex items-center">
+            <div className="flex whitespace-nowrap animate-marquee-ticker">
+              {tickerItems.concat(tickerItems).map((item, idx) => (
+                <Link
+                  key={`${item.slug}-${idx}`}
+                  to="/haber/$slug"
+                  params={{ slug: item.slug }}
+                  className="inline-flex items-center gap-2 pr-6 text-[12px] text-ink transition-colors hover:text-buletin"
+                >
+                  <span className="font-mono font-bold text-buletin text-[11px]">
+                    {formatNewsTime(item.publishedAt)}
+                  </span>
+                  <span className="font-medium text-ink">{item.title}</span>
+                  <span className="text-muted/50 font-normal">/</span>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Sağ Alan: Önceki / Sonraki Butonları & Tümü Butonu */}

@@ -38,11 +38,8 @@ export function Header() {
             />
           </Link>
           {todayFormatted ? (
-            <div className="hidden xl:flex flex-col border-l border-line/70 pl-3 text-[11px] leading-tight text-muted select-none">
-              <span className="font-semibold text-ink/85">{todayFormatted}</span>
-              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] mt-0.5">
-                <span className="size-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" /> Canlı Yayın
-              </span>
+            <div className="hidden xl:flex border-l border-line/70 pl-3.5 text-[12px] font-medium text-ink/80 select-none">
+              <span>{todayFormatted}</span>
             </div>
           ) : null}
         </div>
