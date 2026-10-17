@@ -28,29 +28,7 @@ function imageUrl(item: string): string | null {
   return null;
 }
 
-async function fetchOgImage(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-      signal: AbortSignal.timeout(3500),
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-    const match =
-      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ??
-      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ??
-      html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
-    if (match?.[1] && /^https?:\/\//i.test(match[1])) {
-      return match[1].trim();
-    }
-  } catch {
-    // ignore
-  }
-  return null;
-}
+import { fetchOgImage } from "@/lib/news.server";
 
 function parseFeed(xml: string): FeedItem[] { return [...xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)].map((match) => { const source = match[1] ?? ""; return { title: tagValue(source, "title"), url: tagValue(source, "link"), publishedAt: tagValue(source, "pubDate") || null, imageUrl: imageUrl(source) }; }).filter((item) => item.title && item.url).slice(0, 10); }
 
@@ -62,7 +40,7 @@ async function saveFeedItems(sourceId: keyof typeof feeds, feed: (typeof feeds)[
     if (!finalImg) {
       finalImg = await fetchOgImage(item.url);
     }
-    return sql.query(
+    await sql.query(
       `INSERT INTO source_feed_items (source_id, external_url, external_title, published_at, image_url)
        VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (source_id, external_url)
@@ -72,6 +50,19 @@ async function saveFeedItems(sourceId: keyof typeof feeds, feed: (typeof feeds)[
                      last_seen_at = now()`,
       [sourceId, item.url, item.title, item.publishedAt, finalImg]
     );
+    if (finalImg) {
+      try {
+        await sql.query(
+          `UPDATE news_articles 
+           SET cover_image_url = $1 
+           WHERE source_feed_item_id IN (SELECT id FROM source_feed_items WHERE external_url = $2)
+             AND (cover_image_url IS NULL OR cover_image_url = '' OR cover_image_url LIKE '%unsplash.com%')`,
+          [finalImg, item.url]
+        );
+      } catch {
+        // ignore
+      }
+    }
   }));
 }
 

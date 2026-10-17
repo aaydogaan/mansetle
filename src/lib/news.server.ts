@@ -5,7 +5,12 @@ import { turkishSlugify } from "@/lib/utils";
 const selectArticle = `
   SELECT a.id AS "articleId", a.slug, a.title, a.summary, a.body_markdown AS "bodyMarkdown", a.category,
          s.name AS "sourceName", f.external_url AS "sourceUrl",
-         CASE WHEN a.cover_image_mode = 'none' THEN NULL ELSE COALESCE(a.cover_image_url, f.image_url) END AS "imageUrl",
+         CASE 
+           WHEN a.cover_image_mode = 'none' THEN NULL 
+           WHEN a.cover_image_url IS NOT NULL AND a.cover_image_url != '' AND a.cover_image_url NOT LIKE '%unsplash.com%' THEN a.cover_image_url
+           WHEN f.image_url IS NOT NULL AND f.image_url != '' AND f.image_url NOT LIKE '%unsplash.com%' THEN f.image_url
+           ELSE NULL 
+         END AS "imageUrl",
          a.cover_image_mode AS "imageMode", a.published_at AS "publishedAt"
   FROM news_articles a
   JOIN source_feed_items f ON f.id = a.source_feed_item_id
@@ -33,23 +38,19 @@ export function invalidateArticleCache() {
   globalCache.__singleArticleCache__?.clear();
 }
 
-async function fetchOgImage(url: string): Promise<string | null> {
+export function isPlaceholderOrMissing(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return true;
+  const trimmed = url.trim();
+  if (trimmed.length === 0) return true;
+  if (trimmed.includes("unsplash.com")) return true;
+  return false;
+}
+
+function toAbsoluteUrl(raw: string, baseUrl: string): string | null {
   try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-      signal: AbortSignal.timeout(3500),
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-    const match =
-      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ??
-      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ??
-      html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
-    if (match?.[1] && /^https?:\/\//i.test(match[1])) {
-      return match[1].trim();
+    const parsed = new URL(raw, baseUrl);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.toString();
     }
   } catch {
     // ignore
@@ -57,44 +58,60 @@ async function fetchOgImage(url: string): Promise<string | null> {
   return null;
 }
 
-let isBackfilling = false;
-async function backfillMissingImages() {
-  if (isBackfilling) return;
-  isBackfilling = true;
+export async function fetchOgImage(url: string): Promise<string | null> {
+  if (!url || !/^https?:\/\//i.test(url)) return null;
   try {
-    const sql = await getSql();
-    const rows = await sql.query<{ id: number; externalUrl: string; articleId: number }>(
-      `SELECT f.id, f.external_url AS "externalUrl", a.id AS "articleId"
-       FROM source_feed_items f
-       JOIN news_articles a ON a.source_feed_item_id = f.id
-       WHERE a.status = 'published' AND (f.image_url IS NULL OR f.image_url = '' OR a.cover_image_url IS NULL)
-       ORDER BY a.published_at DESC
-       LIMIT 12`
-    );
-    if (rows.length === 0) {
-      isBackfilling = false;
-      return;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+      },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    // 1. Meta tags (og:image, twitter:image, image_src)
+    const match =
+      html.match(/<meta[^>]+property=["']og:image(?::url)?["'][^>]+content=["']([^"']+)["']/i) ??
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image(?::url)?["']/i) ??
+      html.match(/<meta[^>]+name=["'](?:twitter:image|twitter:image:src)["'][^>]+content=["']([^"']+)["']/i) ??
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["'](?:twitter:image|twitter:image:src)["']/i) ??
+      html.match(/<link[^>]+rel=["']image_src["'][^>]+href=["']([^"']+)["']/i);
+
+    if (match?.[1]) {
+      const abs = toAbsoluteUrl(match[1].trim(), url);
+      if (abs) return abs;
     }
-    let updated = false;
-    for (const row of rows) {
-      const img = await fetchOgImage(row.externalUrl);
-      if (img) {
-        await sql.query("UPDATE source_feed_items SET image_url = $1 WHERE id = $2", [img, row.id]);
-        await sql.query(
-          "UPDATE news_articles SET cover_image_url = $1 WHERE id = $2 AND (cover_image_url IS NULL OR cover_image_url = '')",
-          [img, row.articleId]
-        );
-        updated = true;
+
+    // 2. JSON-LD Schema
+    const jsonLdMatches = html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+    for (const jsonMatch of jsonLdMatches) {
+      try {
+        const json = JSON.parse(jsonMatch[1]);
+        const img = json.image?.url || (Array.isArray(json.image) ? json.image[0] : json.image);
+        if (typeof img === "string") {
+          const abs = toAbsoluteUrl(img.trim(), url);
+          if (abs) return abs;
+        }
+      } catch {
+        // ignore JSON parse error
       }
     }
-    if (updated) {
-      invalidateArticleCache();
+
+    // 3. Article primary image tag
+    const articleImgMatch =
+      html.match(/<article[^>]*>[\s\S]*?<img[^>]+src=["']([^"']+)["']/i) ??
+      html.match(/<div[^>]+class=["'][^"']*(?:news-image|detail-img|main-image|featured-image)[^"']*["'][^>]*>[\s\S]*?<img[^>]+src=["']([^"']+)["']/i);
+    if (articleImgMatch?.[1]) {
+      const abs = toAbsoluteUrl(articleImgMatch[1].trim(), url);
+      if (abs) return abs;
     }
-  } catch (err) {
-    console.error("[backfill] error backfilling images", err);
-  } finally {
-    isBackfilling = false;
+  } catch {
+    // ignore fetch errors
   }
+  return null;
 }
 
 export async function listPublishedArticles(category?: string, limit = 24): Promise<LiveArticle[]> {
@@ -116,9 +133,29 @@ export async function listPublishedArticles(category?: string, limit = 24): Prom
     rows = await sql.query<LiveArticle>(`${selectArticle} ORDER BY a.published_at DESC LIMIT $1`, [limit]);
   }
 
-  // Check if any articles have missing images, and run non-blocking repair in background
-  if (rows.some((item) => !item.imageUrl)) {
-    backfillMissingImages().catch(() => {});
+  // Synchronously resolve any articles with missing or placeholder images directly from their source URL
+  const missing = rows.filter((item) => isPlaceholderOrMissing(item.imageUrl) && item.sourceUrl);
+  if (missing.length > 0) {
+    await Promise.all(
+      missing.map(async (item) => {
+        const realImg = await fetchOgImage(item.sourceUrl);
+        if (realImg) {
+          item.imageUrl = realImg;
+          try {
+            await sql.query("UPDATE source_feed_items SET image_url = $1 WHERE external_url = $2", [realImg, item.sourceUrl]);
+            await sql.query(
+              `UPDATE news_articles 
+               SET cover_image_url = $1 
+               WHERE source_feed_item_id IN (SELECT id FROM source_feed_items WHERE external_url = $2) 
+                 AND (cover_image_url IS NULL OR cover_image_url = '' OR cover_image_url LIKE '%unsplash.com%')`,
+              [realImg, item.sourceUrl]
+            );
+          } catch {
+            // ignore
+          }
+        }
+      })
+    );
   }
 
   globalCache.__articleListCache__?.set(cacheKey, {
@@ -130,7 +167,7 @@ export async function listPublishedArticles(category?: string, limit = 24): Prom
 }
 
 async function ensureArticleHasImage(article: LiveArticle & { articleId?: number }): Promise<LiveArticle> {
-  if (!article.imageUrl && article.sourceUrl) {
+  if (isPlaceholderOrMissing(article.imageUrl) && article.sourceUrl) {
     const realImg = await fetchOgImage(article.sourceUrl);
     if (realImg) {
       article.imageUrl = realImg;

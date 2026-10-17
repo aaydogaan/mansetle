@@ -46,8 +46,8 @@ export const Route = createFileRoute("/api/recep/generate")({
         const body = (await request.json()) as { sourceFeedItemId?: number };
         if (!Number.isInteger(body.sourceFeedItemId)) return Response.json({ error: "Geçersiz haber." }, { status: 400 });
         const sql = await getSql();
-        const rows = await sql.query<{ id: number; title: string; url: string; sourceName: string; articleId: number | null }>(
-          `SELECT f.id, f.external_title AS title, f.external_url AS url, s.name AS "sourceName", a.id AS "articleId"
+        const rows = await sql.query<{ id: number; title: string; url: string; imageUrl: string | null; sourceName: string; articleId: number | null }>(
+          `SELECT f.id, f.external_title AS title, f.external_url AS url, f.image_url AS "imageUrl", s.name AS "sourceName", a.id AS "articleId"
            FROM source_feed_items f
            JOIN news_sources s ON s.id = f.source_id
            LEFT JOIN news_articles a ON a.source_feed_item_id = f.id
@@ -57,6 +57,15 @@ export const Route = createFileRoute("/api/recep/generate")({
         const item = rows[0];
         if (!item) return Response.json({ error: "Kaynak haberi bulunamadı." }, { status: 404 });
         if (item.articleId) return Response.json({ error: "Bu haber için taslak zaten var." }, { status: 409 });
+
+        let realImage = item.imageUrl;
+        if (!realImage || realImage.includes("unsplash.com")) {
+          const { fetchOgImage } = await import("@/lib/news.server");
+          realImage = await fetchOgImage(item.url);
+          if (realImage) {
+            await sql.query("UPDATE source_feed_items SET image_url = $1 WHERE id = $2", [realImage, item.id]);
+          }
+        }
 
         const draft = await generateNewsDraft({ sourceName: item.sourceName, sourceTitle: item.title, sourceUrl: item.url });
 
@@ -71,9 +80,9 @@ export const Route = createFileRoute("/api/recep/generate")({
         }
 
         const result = await sql.query<{ id: number }>(
-          `INSERT INTO news_articles (source_feed_item_id, slug, title, summary, body_markdown, category, ai_model, input_tokens, output_tokens)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-          [item.id, finalSlug, draft.title, draft.summary, draft.bodyMarkdown, draft.category, draft.model, draft.inputTokens, draft.outputTokens]
+          `INSERT INTO news_articles (source_feed_item_id, slug, title, summary, body_markdown, category, cover_image_url, cover_image_mode, ai_model, input_tokens, output_tokens)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+          [item.id, finalSlug, draft.title, draft.summary, draft.bodyMarkdown, draft.category, realImage || null, "auto", draft.model, draft.inputTokens, draft.outputTokens]
         );
         return Response.json({ articleId: result[0]?.id, slug: finalSlug });
       },
