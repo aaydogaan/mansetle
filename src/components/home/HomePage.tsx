@@ -4,6 +4,9 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 import type { LiveArticle } from "@/lib/news";
 import { categoryNames, getArticleImageUrl, DEFAULT_CATEGORY_IMAGES } from "@/lib/site";
 import { estimateReadTime, formatRelativeTime } from "@/lib/utils";
+import { BreakingNewsBar } from "./BreakingNewsBar";
+import { SuperLigWidget } from "./SuperLigWidget";
+import type { SuperLigData } from "@/lib/superlig.server";
 
 function ArticleImage({
   article,
@@ -190,7 +193,13 @@ function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
   );
 }
 
-export function HomePage({ articles: initialArticles }: { articles: LiveArticle[] }) {
+export function HomePage({
+  articles: initialArticles,
+  superLigData,
+}: {
+  articles: LiveArticle[];
+  superLigData?: SuperLigData | null;
+}) {
   const [items, setItems] = useState<LiveArticle[]>(initialArticles ?? []);
   const [loading, setLoading] = useState<boolean>(!initialArticles || initialArticles.length === 0);
 
@@ -247,6 +256,9 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
 
   return (
     <div className="pb-16 md:pb-24">
+      {/* 0. Son Haberler Ticker Bandı (Haber Vibe Veren Canlı Akış) */}
+      <BreakingNewsBar articles={items} />
+
       {/* Yüklenme / Boş Durum */}
       {loading && items.length === 0 ? (
         <section className="container-buletin py-16">
@@ -386,48 +398,58 @@ export function HomePage({ articles: initialArticles }: { articles: LiveArticle[
             </section>
           ) : null}
 
-          {/* 4. Kategori İkilisi (Gündem & Ekonomi vs Spor & Teknoloji) */}
-          {catLeft.length > 0 || catRight.length > 0 ? (
-            <section className="container-buletin mt-14 md:mt-20">
-              <div className="grid gap-10 md:grid-cols-2">
-                <div>
-                  <div className="mb-5 flex items-center justify-between border-b border-line pb-3">
-                    <h3 className="font-serif text-xl font-bold text-ink">Gündem & Ekonomi</h3>
-                    <Link
-                      to="/kategori/$slug"
-                      params={{ slug: "para" }}
-                      className="text-xs font-bold text-buletin hover:underline"
-                    >
-                      Tümü →
-                    </Link>
+          {/* 4. Haberler ve Trendyol Süper Lig Masası */}
+          <section className="container-buletin mt-14 md:mt-20">
+            <div className="grid gap-10 lg:grid-cols-12 items-start">
+              {/* Sol Sütun: Gündem & Spor Haberleri (7 Kolon) */}
+              <div className="lg:col-span-7 space-y-12">
+                {catLeft.length > 0 && (
+                  <div>
+                    <div className="mb-5 flex items-center justify-between border-b border-line pb-3">
+                      <h3 className="font-serif text-xl font-bold text-ink">Gündem & Ekonomi</h3>
+                      <Link
+                        to="/kategori/$slug"
+                        params={{ slug: "para" }}
+                        className="text-xs font-bold text-buletin hover:underline"
+                      >
+                        Tümü →
+                      </Link>
+                    </div>
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      {catLeft.map((article) => (
+                        <GridCard key={article.slug} article={article} />
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    {catLeft.map((article) => (
-                      <GridCard key={article.slug} article={article} />
-                    ))}
-                  </div>
-                </div>
+                )}
 
-                <div>
-                  <div className="mb-5 flex items-center justify-between border-b border-line pb-3">
-                    <h3 className="font-serif text-xl font-bold text-ink">Spor & Teknoloji</h3>
-                    <Link
-                      to="/kategori/$slug"
-                      params={{ slug: "spor" }}
-                      className="text-xs font-bold text-buletin hover:underline"
-                    >
-                      Tümü →
-                    </Link>
+                {catRight.length > 0 && (
+                  <div>
+                    <div className="mb-5 flex items-center justify-between border-b border-line pb-3">
+                      <h3 className="font-serif text-xl font-bold text-ink">Spor & Teknoloji</h3>
+                      <Link
+                        to="/kategori/$slug"
+                        params={{ slug: "spor" }}
+                        className="text-xs font-bold text-buletin hover:underline"
+                      >
+                        Tümü →
+                      </Link>
+                    </div>
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      {catRight.map((article) => (
+                        <GridCard key={article.slug} article={article} />
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    {catRight.map((article) => (
-                      <GridCard key={article.slug} article={article} />
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
-            </section>
-          ) : null}
+
+              {/* Sağ Sütun: Trendyol Süper Lig Puan Durumu & Fikstür Widget (5 Kolon) */}
+              <div className="lg:col-span-5 lg:sticky lg:top-24">
+                <SuperLigWidget data={superLigData} />
+              </div>
+            </div>
+          </section>
 
           {/* 5. Tüm Gelişmeler */}
           {moreNews.length > 0 ? (

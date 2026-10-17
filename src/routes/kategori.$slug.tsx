@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { categoryNames, pageTitle, seoHead, getArticleImageUrl, DEFAULT_CATEGORY_IMAGES } from "@/lib/site";
 import { getPublishedArticles } from "@/lib/news.functions";
+import { getSuperLigDataFn } from "@/lib/superlig.functions";
+import { SuperLigWidget } from "@/components/home/SuperLigWidget";
 import type { LiveArticle } from "@/lib/news";
 import { estimateReadTime, formatRelativeTime } from "@/lib/utils";
 
@@ -13,8 +15,11 @@ export const Route = createFileRoute("/kategori/$slug")({
   loader: async ({ params }) => {
     const slug = params.slug;
     const title = categoryNames[slug] ?? slug.replace(/-/g, " ");
-    const articles = await getPublishedArticles({ data: { category: slug, limit: 36 } });
-    return { slug, title, articles };
+    const [articles, superLigData] = await Promise.all([
+      getPublishedArticles({ data: { category: slug, limit: 36 } }),
+      slug === "spor" ? getSuperLigDataFn().catch(() => null) : Promise.resolve(null),
+    ]);
+    return { slug, title, articles, superLigData };
   },
   head: ({ loaderData }) => {
     const title = loaderData?.title ?? "Kategori";
@@ -197,7 +202,7 @@ function CategoryCarousel({ articles }: { articles: LiveArticle[] }) {
 }
 
 function CategoryPage() {
-  const { slug, title, articles } = Route.useLoaderData();
+  const { slug, title, articles, superLigData } = Route.useLoaderData();
 
   const carouselArticles = articles.slice(0, 4);
   const gridArticles = articles.length > 4 ? articles.slice(4) : articles.slice(1);
@@ -247,6 +252,13 @@ function CategoryPage() {
             {/* 1. Üst Profesyonel Karusel */}
             {carouselArticles.length > 0 ? (
               <CategoryCarousel articles={carouselArticles} />
+            ) : null}
+
+            {/* Süper Lig Masası (Sadece Spor Kategorisinde) */}
+            {slug === "spor" && superLigData ? (
+              <div className="mb-12">
+                <SuperLigWidget data={superLigData} />
+              </div>
             ) : null}
 
             {/* 2. Kategori Haber Izgarası */}

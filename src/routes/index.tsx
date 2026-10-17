@@ -3,11 +3,18 @@ import { HomePage } from "@/components/home/HomePage";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { pageTitle, seoHead, site, getArticleImageUrl } from "@/lib/site";
 import { getPublishedArticles } from "@/lib/news.functions";
+import { getSuperLigDataFn } from "@/lib/superlig.functions";
 
 export const Route = createFileRoute("/")({
   staleTime: 60_000,
   gcTime: 300_000,
-  loader: async () => ({ articles: await getPublishedArticles({ data: { limit: 36 } }) }),
+  loader: async () => {
+    const [articles, superLigData] = await Promise.all([
+      getPublishedArticles({ data: { limit: 36 } }),
+      getSuperLigDataFn().catch(() => null),
+    ]);
+    return { articles, superLigData };
+  },
   head: ({ loaderData }) => {
     const seo = seoHead({ title: pageTitle(), description: site.description, path: "/" });
     const articles = loaderData?.articles ?? [];
@@ -34,10 +41,10 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { articles } = Route.useLoaderData();
+  const { articles, superLigData } = Route.useLoaderData();
   return (
     <SiteShell>
-      <HomePage articles={articles} />
+      <HomePage articles={articles} superLigData={superLigData} />
     </SiteShell>
   );
 }

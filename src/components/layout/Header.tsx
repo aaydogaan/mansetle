@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { navLinks } from "@/data/content";
@@ -10,11 +10,26 @@ export function Header() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { isDark, toggleTheme, mounted } = useTheme();
 
+  const [todayFormatted, setTodayFormatted] = useState("");
+  useEffect(() => {
+    try {
+      setTodayFormatted(
+        new Intl.DateTimeFormat("tr-TR", {
+          day: "numeric",
+          month: "long",
+          weekday: "long",
+        }).format(new Date())
+      );
+    } catch {
+      setTodayFormatted("Bugün");
+    }
+  }, []);
+
   return (
     <header className="sticky top-0 z-40 border-b border-line/60 bg-surface/95 backdrop-blur-md transition-colors">
       <div className="container-buletin flex h-[76px] items-center justify-between gap-4 lg:gap-8">
-        {/* Sol Alan: Logo */}
-        <div className="flex shrink-0 items-center">
+        {/* Sol Alan: Logo & Tarih */}
+        <div className="flex shrink-0 items-center gap-3.5">
           <Link to="/" preload="intent" className="flex items-center transition-opacity hover:opacity-90">
             <img
               src="/logos/mansetle-logo.webp"
@@ -22,6 +37,14 @@ export function Header() {
               className="h-10 sm:h-11 md:h-12 w-auto object-contain transition-all"
             />
           </Link>
+          {todayFormatted ? (
+            <div className="hidden xl:flex flex-col border-l border-line/70 pl-3 text-[11px] leading-tight text-muted select-none">
+              <span className="font-semibold text-ink/85">{todayFormatted}</span>
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] mt-0.5">
+                <span className="size-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" /> Canlı Yayın
+              </span>
+            </div>
+          ) : null}
         </div>
 
         {/* Orta Alan: Tam Ortalı Kategoriler */}
