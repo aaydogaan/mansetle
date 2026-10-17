@@ -40,13 +40,13 @@ export function BreakingNewsBar({ articles }: { articles: LiveArticle[] }) {
       onMouseLeave={() => setIsPaused(false)}
     >
       <div className="relative flex items-center overflow-hidden rounded-xl border border-line bg-soft/75 dark:bg-card/60 shadow-2xs backdrop-blur-xs transition-colors">
-        {/* Sol Kırmızı Rozet: SON HABERLER */}
-        <div className="flex shrink-0 items-center gap-1.5 bg-buletin px-3 sm:px-4 py-2 sm:py-2.5 text-white shadow-xs select-none">
-          <span className="relative flex size-2 shrink-0">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-white opacity-75" />
-            <span className="relative inline-flex size-2 rounded-full bg-white" />
+        {/* Sol Rozet: Mobilde yalnızca canlı kırmızı nokta, masaüstünde SON HABERLER rozeti */}
+        <div className="flex shrink-0 items-center gap-1.5 px-2.5 sm:px-4 py-2 sm:py-2.5 sm:bg-buletin text-buletin sm:text-white select-none">
+          <span className="relative flex size-2.5 shrink-0">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-buletin sm:bg-white opacity-75" />
+            <span className="relative inline-flex size-2.5 rounded-full bg-buletin sm:bg-white" />
           </span>
-          <span className="font-sans text-[11px] sm:text-[12px] font-black tracking-wider uppercase text-white whitespace-nowrap">
+          <span className="hidden sm:inline-block font-sans text-[12px] font-black tracking-wider uppercase whitespace-nowrap">
             SON HABERLER
           </span>
           <Flame className="size-3.5 text-white/90 hidden sm:inline-block" />
