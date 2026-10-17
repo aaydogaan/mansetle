@@ -30,6 +30,8 @@ export const Route = createFileRoute("/api/recep/publish")({
           [body.articleId]
         );
         if (!result[0]) return Response.json({ error: "Taslak bulunamadı veya zaten yayında." }, { status: 404 });
+        const { invalidateArticleCache } = await import("@/lib/news.server");
+        invalidateArticleCache();
         return Response.json({ ok: true });
       },
     },

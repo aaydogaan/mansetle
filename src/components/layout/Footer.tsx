@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUp } from "lucide-react";
-import { footerColumns, slugify } from "@/data/content";
+import { footerColumns } from "@/data/content";
 
 
 
@@ -65,19 +65,19 @@ export function Footer() {
   );
 }
 
-function FooterCol({ title, links }: { title: string; links: readonly string[] }) {
+function FooterCol({ title, links }: { title: string; links: readonly { label: string; slug: string }[] }) {
   return (
     <div>
       <h3 className="font-serif text-[15px] font-bold text-ink">{title}</h3>
       <ul className="mt-4 space-y-2">
         {links.map((link) => (
-          <li key={link}>
+          <li key={link.label}>
             <Link
               to="/kategori/$slug"
-              params={{ slug: slugify(link) }}
+              params={{ slug: link.slug }}
               className="inline-block text-[13.5px] text-muted transition-all duration-150 hover:translate-x-1 hover:text-buletin"
             >
-              {link}
+              {link.label}
             </Link>
           </li>
         ))}

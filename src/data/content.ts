@@ -522,20 +522,38 @@ export const navLinks = [
 
 export const footerColumns = [
   {
-    title: "Ekonomi",
-    links: ["Girişim", "Piyasalar", "Finans", "Şirketler", "Kariyer"],
+    title: "Gündem",
+    links: [
+      { label: "Gündem", slug: "gundem" },
+      { label: "Türkiye", slug: "turkiye" },
+      { label: "Dünya", slug: "dunya" },
+      { label: "Son Haberler", slug: "son-haberler" },
+    ],
+  },
+  {
+    title: "Ekonomi & Para",
+    links: [
+      { label: "Piyasalar & Para", slug: "para" },
+      { label: "Finans & Borsa", slug: "para" },
+      { label: "Ekonomi Haberleri", slug: "para" },
+    ],
   },
   {
     title: "Teknoloji",
-    links: ["Yapay Zeka", "Mobil", "Gelecek", "Donanım", "Yazılım"],
+    links: [
+      { label: "Teknoloji Gelişmeleri", slug: "teknoloji" },
+      { label: "Yapay Zeka", slug: "teknoloji" },
+      { label: "Mobil & Donanım", slug: "teknoloji" },
+    ],
   },
   {
-    title: "Gündem & Yaşam",
-    links: ["Kültür", "Sanat", "Seyahat", "Sağlık", "Çevre"],
-  },
-  {
-    title: "Spor",
-    links: ["Futbol", "Basketbol", "Motor Sporları", "Tenis", "Olimpiyatlar"],
+    title: "Yaşam & Spor",
+    links: [
+      { label: "Spor Dünyası", slug: "spor" },
+      { label: "Kültür & Sanat", slug: "kultur" },
+      { label: "Yaşam", slug: "yasam" },
+      { label: "Eğlence", slug: "eglence" },
+    ],
   },
 ] as const;
 

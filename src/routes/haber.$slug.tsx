@@ -8,6 +8,8 @@ import { absoluteUrl, categoryNames, pageTitle, seoHead, site, trimDescription }
 import { estimateReadTime, formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 
 export const Route = createFileRoute("/haber/$slug")({
+  staleTime: 60_000,
+  gcTime: 300_000,
   loader: async ({ params }) => {
     try {
       const [article, allArticles] = await Promise.all([
@@ -29,6 +31,7 @@ export const Route = createFileRoute("/haber/$slug")({
           description: trimDescription(article.summary),
           path: `/haber/${article.slug}`,
           type: "article",
+          image: article.imageUrl ?? undefined,
         })
       : { meta: [{ title: pageTitle("Haber bulunamadı") }, { name: "robots", content: "noindex, follow" }] };
   },
@@ -278,6 +281,8 @@ function ArticlePage() {
                       <img
                         src={item.imageUrl}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                         referrerPolicy="no-referrer"
                         className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />

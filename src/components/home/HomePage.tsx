@@ -5,7 +5,15 @@ import type { LiveArticle } from "@/lib/news";
 import { categoryNames, getArticleImageUrl, DEFAULT_CATEGORY_IMAGES } from "@/lib/site";
 import { estimateReadTime, formatRelativeTime } from "@/lib/utils";
 
-function ArticleImage({ article, className }: { article: LiveArticle; className: string }) {
+function ArticleImage({
+  article,
+  className,
+  priority = false,
+}: {
+  article: LiveArticle;
+  className: string;
+  priority?: boolean;
+}) {
   const initialUrl = getArticleImageUrl(article);
   const [src, setSrc] = useState(initialUrl);
 
@@ -18,7 +26,8 @@ function ArticleImage({ article, className }: { article: LiveArticle; className:
       src={src}
       alt={article.title}
       className={className}
-      loading="eager"
+      loading={priority ? "eager" : "lazy"}
+      decoding={priority ? "sync" : "async"}
       referrerPolicy="no-referrer"
       onError={() => {
         const fallback = DEFAULT_CATEGORY_IMAGES[article.category] ?? DEFAULT_CATEGORY_IMAGES.gundem;
@@ -69,6 +78,7 @@ function SideStoryItem({ article }: { article: LiveArticle }) {
       <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-soft">
         <ArticleImage
           article={article}
+          priority={true}
           className="size-full object-cover"
         />
       </div>
@@ -126,6 +136,7 @@ function CenterRotatingCard({ articles }: { articles: LiveArticle[] }) {
         <div className="absolute inset-0">
           <ArticleImage
             article={current}
+            priority={true}
             className="size-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/15" />

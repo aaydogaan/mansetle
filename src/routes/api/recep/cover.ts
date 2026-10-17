@@ -30,6 +30,8 @@ export const Route = createFileRoute("/api/recep/cover")({
           "UPDATE news_articles SET cover_image_mode = $1, cover_image_url = $2 WHERE id = $3",
           [body.mode, body.mode === "manual" ? imageUrl : null, body.articleId]
         );
+        const { invalidateArticleCache } = await import("@/lib/news.server");
+        invalidateArticleCache();
         return Response.json({ ok: true, mode: body.mode, imageUrl: body.mode === "manual" ? imageUrl : null });
       },
     },
