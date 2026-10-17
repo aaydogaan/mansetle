@@ -18,11 +18,30 @@ export const Route = createFileRoute("/kategori/$slug")({
   },
   head: ({ loaderData }) => {
     const title = loaderData?.title ?? "Kategori";
-    return seoHead({
+    const articles = loaderData?.articles ?? [];
+    const lcpArticle = articles[0];
+    const lcpImageUrl = lcpArticle ? getArticleImageUrl(lcpArticle) : null;
+    const seo = seoHead({
       title: pageTitle(title),
       description: `${title} kategorisindeki en güncel ve özgün Mansetle haberleri.`,
       path: `/kategori/${loaderData?.slug ?? "gundem"}`,
     });
+    return {
+      ...seo,
+      links: [
+        ...(seo.links ?? []),
+        ...(lcpImageUrl
+          ? [
+              {
+                rel: "preload",
+                as: "image",
+                href: lcpImageUrl,
+                fetchPriority: "high" as const,
+              },
+            ]
+          : []),
+      ],
+    };
   },
   component: CategoryPage,
 });
@@ -49,6 +68,7 @@ function ArticleImage({
       alt={article.title}
       className={className}
       loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
       decoding={priority ? "sync" : "async"}
       referrerPolicy="no-referrer"
       onError={() => {

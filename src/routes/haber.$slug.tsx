@@ -25,15 +25,32 @@ export const Route = createFileRoute("/haber/$slug")({
   },
   head: ({ loaderData }) => {
     const article = loaderData?.article;
-    return article
-      ? seoHead({
-          title: pageTitle(article.title),
-          description: trimDescription(article.summary),
-          path: `/haber/${article.slug}`,
-          type: "article",
-          image: article.imageUrl ?? undefined,
-        })
-      : { meta: [{ title: pageTitle("Haber bulunamadı") }, { name: "robots", content: "noindex, follow" }] };
+    if (!article) {
+      return { meta: [{ title: pageTitle("Haber bulunamadı") }, { name: "robots", content: "noindex, follow" }] };
+    }
+    const seo = seoHead({
+      title: pageTitle(article.title),
+      description: trimDescription(article.summary),
+      path: `/haber/${article.slug}`,
+      type: "article",
+      image: article.imageUrl ?? undefined,
+    });
+    return {
+      ...seo,
+      links: [
+        ...(seo.links ?? []),
+        ...(article.imageUrl
+          ? [
+              {
+                rel: "preload",
+                as: "image",
+                href: article.imageUrl,
+                fetchPriority: "high" as const,
+              },
+            ]
+          : []),
+      ],
+    };
   },
   component: ArticlePage,
 });
@@ -204,6 +221,7 @@ function ArticlePage() {
                     alt={article.title}
                     className="aspect-video w-full object-cover"
                     loading="eager"
+                    fetchPriority="high"
                     referrerPolicy="no-referrer"
                   />
                 </div>

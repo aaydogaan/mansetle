@@ -27,6 +27,7 @@ function ArticleImage({
       alt={article.title}
       className={className}
       loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
       decoding={priority ? "sync" : "async"}
       referrerPolicy="no-referrer"
       onError={() => {
